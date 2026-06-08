@@ -1,0 +1,47 @@
+import { z } from "zod";
+
+/**
+ * Password rules:
+ * - min 8 chars
+ * - 1 uppercase
+ * - 1 lowercase
+ * - 1 number
+ * - 1 special character
+ */
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters long")
+  .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least 1 number")
+  .regex(
+    /[^A-Za-z0-9]/,
+    "Password must contain at least 1 special character"
+  );
+
+/**
+ * SIGNUP DTO
+ */
+export const SignupSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, "Full name must be at least 2 characters long")
+    .trim(),
+
+  email: z.string().email("Invalid email format"),
+
+  role: z.enum(["student", "tutor"], {
+    error: "Role must be student or tutor",
+  }),
+
+  password: passwordSchema,
+});
+
+/**
+ * LOGIN DTO
+ */
+export const LoginSchema = z.object({
+  email: z.string().email("Invalid email format"),
+
+  password: z.string().min(1, "Password is required"),
+});
