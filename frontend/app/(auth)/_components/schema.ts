@@ -13,6 +13,7 @@ export const signupSchema = z
       .min(2, "Full name must be at least 2 characters")
       .max(50, "Full name is too long"),
     email: z.string().trim().email("Please enter a valid email address"),
+    phoneNumber: z.string().optional(),
     role: z.enum(["student", "tutor"], {
        error: "Please select a valid role" ,
     }),
