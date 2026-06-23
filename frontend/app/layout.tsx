@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { UserProvider } from "@/lib/context/UserContext";
 
 export const metadata: Metadata = {
   title: "Sikshya",
@@ -21,7 +22,7 @@ export default function RootLayout({
           backgroundColor: "#f0f2f5",
         }}
       >
-        {children}
+        <UserProvider>{children}</UserProvider>
       </body>
     </html>
   );

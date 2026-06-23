@@ -6,6 +6,7 @@ export interface RegisterPayload {
   email: string;
   role: "student" | "tutor";
   password: string;
+  phoneNumber?: string;
 }
 
 export interface LoginPayload {
