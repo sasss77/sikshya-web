@@ -8,6 +8,7 @@ export const registerAction = async (data: {
   email: string;
   role: "student" | "tutor";
   password: string;
+  phoneNumber?: string;
 }) => {
   try {
     const response = await registerApi(data);
