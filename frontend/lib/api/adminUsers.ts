@@ -1,0 +1,39 @@
+import { axiosInstance } from "./axios-instance";
+import { ENDPOINTS } from "./endpoints";
+
+export const fetchAdminUsersApi = async (token: string, params: { page?: number; limit?: number; search?: string }) => {
+  const response = await axiosInstance.get(ENDPOINTS.ADMIN_USERS, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params,
+  });
+  return response.data;
+};
+
+export const createAdminUserApi = async (token: string, data: any) => {
+  const response = await axiosInstance.post(ENDPOINTS.ADMIN_USERS, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+export const updateAdminUserApi = async (token: string, id: string, data: any) => {
+  const response = await axiosInstance.put(`${ENDPOINTS.ADMIN_USERS}/${id}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+export const deleteAdminUserApi = async (token: string, id: string) => {
+  const response = await axiosInstance.delete(`${ENDPOINTS.ADMIN_USERS}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
