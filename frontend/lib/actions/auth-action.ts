@@ -1,7 +1,7 @@
 "use server";
 
 import { loginApi, registerApi } from "../api/auth";
-import { setTokenCookie } from "../cookies";
+import { setTokenCookie, removeTokenCookie } from "../cookies";
 
 export const registerAction = async (data: {
   fullName: string;
@@ -50,4 +50,9 @@ export const loginAction = async (data: {
         "Login failed",
     };
   }
+};
+
+export const logoutAction = async () => {
+  await removeTokenCookie();
+  return { success: true };
 };
