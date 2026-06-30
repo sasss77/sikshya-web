@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
 
 // ─── Inline styles kept as a single const so there are zero external deps ───
@@ -296,7 +297,15 @@ const IconImage = () => (
 const AVATAR_INITIALS = ["A", "B", "C"];
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const { user, loading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user?.role === "admin") {
+      router.replace("/admin/users");
+    }
+  }, [user, loading, router]);
+
   const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
   const imageUrl = user?.profileImage ? `${backendUrl}${user.profileImage}` : null;
   return (

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
 import { getTokenAction } from "@/lib/actions/user-actions";
+import { logoutAction } from "@/lib/actions/auth-action";
 import axios from "axios";
 
 // ─── Component Styles ───
@@ -450,6 +452,74 @@ const S: Record<string, React.CSSProperties> = {
         fontWeight: 700,
         marginBottom: "2px",
     },
+    modalOverlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(15, 23, 42, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: "20px",
+    },
+    modal: {
+        backgroundColor: "#fff",
+        borderRadius: "12px",
+        width: "100%",
+        maxWidth: "400px",
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    },
+    modalHeader: {
+        padding: "20px 24px",
+        borderBottom: "1px solid #e2e8f0",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    modalTitle: {
+        fontSize: "18px",
+        fontWeight: 600,
+        color: "#0f172a",
+        margin: 0,
+    },
+    modalBody: {
+        padding: "24px",
+        fontSize: "14px",
+        color: "#475569",
+    },
+    modalFooter: {
+        padding: "16px 24px",
+        borderTop: "1px solid #e2e8f0",
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: "12px",
+        backgroundColor: "#f8fafc",
+        borderBottomLeftRadius: "12px",
+        borderBottomRightRadius: "12px",
+    },
+    btnDanger: {
+        backgroundColor: "#ef4444",
+        color: "#fff",
+        border: "none",
+        padding: "10px 16px",
+        borderRadius: "6px",
+        fontSize: "14px",
+        fontWeight: 500,
+        cursor: "pointer",
+    },
+    btnGhost: {
+        backgroundColor: "transparent",
+        color: "#64748b",
+        border: "1px solid #e2e8f0",
+        padding: "10px 16px",
+        borderRadius: "6px",
+        fontSize: "14px",
+        fontWeight: 500,
+        cursor: "pointer",
+    },
 };
 
 /* ─── Icons ─── */
@@ -513,15 +583,36 @@ const IconUser = () => (
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
     </svg>
 );
+const IconLogOut = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+    </svg>
+);
+const IconX = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+);
 
 
 export default function ProfilePage() {
     const { user, loading, refreshUser } = useUser();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && user?.role === "admin") {
+            router.replace("/admin/users");
+        }
+    }, [user, loading, router]);
 
     // State handling active screen navigation view
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [saving, setSaving] = useState(false);
     const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
 
     // Local profile data (populated from context)
     const [profileData, setProfileData] = useState({
@@ -669,6 +760,12 @@ export default function ProfilePage() {
     };
 
     // Determine which avatar to show in the edit form
+    // Handle Logout
+    const handleLogout = async () => {
+        await logoutAction();
+        router.push("/login");
+    };
+
     const editAvatarSrc = previewUrl || imageUrl;
 
     if (loading) {
@@ -708,9 +805,14 @@ export default function ProfilePage() {
                     <>
                         <div style={S.profileHeaderRow}>
                             <h1 style={S.pageTitle}>My Profile</h1>
-                            <button style={S.editBtn} onClick={() => setIsEditing(true)}>
-                                <IconEditPen /> Edit Profile
-                            </button>
+                            <div style={{ display: "flex", gap: "12px" }}>
+                                <button style={S.editBtn} onClick={() => setIsEditing(true)}>
+                                    <IconEditPen /> Edit Profile
+                                </button>
+                                <button style={{ ...S.editBtn, color: "#ef4444", borderColor: "#ef4444" }} onClick={() => setIsLogoutModalOpen(true)}>
+                                    <IconLogOut /> Logout
+                                </button>
+                            </div>
                         </div>
 
                         <div style={S.topGrid}>
@@ -1004,6 +1106,27 @@ export default function ProfilePage() {
                     </>
                 )}
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {isLogoutModalOpen && (
+                <div style={S.modalOverlay}>
+                    <div style={S.modal}>
+                        <div style={S.modalHeader}>
+                            <h2 style={S.modalTitle}>Confirm Logout</h2>
+                            <button onClick={() => setIsLogoutModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
+                                <IconX />
+                            </button>
+                        </div>
+                        <div style={S.modalBody}>
+                            <p style={{ margin: 0 }}>Are you sure you want to log out of your account?</p>
+                        </div>
+                        <div style={S.modalFooter}>
+                            <button style={S.btnGhost} onClick={() => setIsLogoutModalOpen(false)}>Cancel</button>
+                            <button style={S.btnDanger} onClick={handleLogout}>Yes, Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

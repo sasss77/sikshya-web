@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import loginImage from "@/app/assets/loginImage.jpg";
 
 import { loginAction } from "@/lib/actions/auth-action";
+import { getUserAction } from "@/lib/actions/user-actions";
 import { LoginInput, loginSchema } from "./schema";
 
 export default function LoginForm() {
@@ -33,7 +34,17 @@ export default function LoginForm() {
     const result = await loginAction(data);
 
     if (result.success) {
-      router.push("/dashboard");
+      // Fetch user profile to check the role reliably
+      const userRes = await getUserAction();
+      const role = userRes.data?.role || result.data?.user?.role || result.data?.role;
+
+      // Use a full page navigation (not client-side push) so the freshly-set
+      // cookie is available to the server on the very first load of the target page.
+      if (role === "admin") {
+        window.location.href = "/admin/users";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } else {
       setServerError(result.message);
     }
