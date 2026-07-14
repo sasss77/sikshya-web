@@ -12,6 +12,7 @@ export interface UserData {
   profileImage: string;
   createdAt: string;
   updatedAt: string;
+  isVerifiedStudent?: boolean;
 }
 
 interface UserContextType {
