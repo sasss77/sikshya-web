@@ -80,8 +80,8 @@ const S: Record<string, React.CSSProperties> = {
     /* ── View Profile Content Layout ── */
     container: {
         maxWidth: "1040px",
-        margin: "40px auto",
-        padding: "0 20px",
+        margin: "0 auto",
+        padding: "40px 20px",
     },
     profileHeaderRow: {
         display: "flex",
@@ -731,7 +731,8 @@ export default function ProfilePage() {
             }
             if (passwordForm.oldPassword && passwordForm.newPassword) {
                 formData.append("oldPassword", passwordForm.oldPassword);
-                formData.append("newPassword", passwordForm.newPassword);
+                formData.append("password", passwordForm.newPassword);
+                formData.append("confirmPassword", passwordForm.confirmPassword);
             }
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -778,26 +779,6 @@ export default function ProfilePage() {
 
     return (
         <div style={S.root}>
-            {/* ── Top Navigation Bar ── */}
-            <nav style={S.nav}>
-                <span style={S.navLogo}>Sikshya</span>
-                <ul style={S.navLinks}>
-                    <li><Link style={S.navLink} href="/dashboard">Home</Link></li>
-                    <li><a style={S.navLink} href="#">Find Tutors</a></li>
-                    <li><a style={S.navLink} href="#">How it Works</a></li>
-                </ul>
-                <div style={S.navRight}>
-                    <Link href="/dashboard/profile" style={{ textDecoration: "none", color: "inherit" }}>
-                        <div style={{ ...S.profileAvatar, overflow: "hidden" }} onClick={() => setIsEditing(false)} title="Profile">
-                            {imageUrl ? (
-                                <img src={imageUrl} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-                            ) : (
-                                <IconUser />
-                            )}
-                        </div>
-                    </Link>
-                </div>
-            </nav>
 
             <div style={S.container}>
                 {!isEditing ? (
@@ -814,6 +795,19 @@ export default function ProfilePage() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Student Verification Banner */}
+                        {user?.role === "student" && !user?.isVerifiedStudent && (
+                            <div style={{ background: "linear-gradient(135deg, #fef3c7, #fef08a)", border: "1px solid #fde047", borderRadius: "12px", padding: "16px 24px", marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                    <h3 style={{ margin: "0 0 4px", fontSize: "16px", color: "#854d0e", fontWeight: 800 }}>Complete Your Student Verification</h3>
+                                    <p style={{ margin: 0, fontSize: "14px", color: "#a16207" }}>You need to be a verified student to book classes with tutors.</p>
+                                </div>
+                                <Link href="/dashboard/verify-student" style={{ background: "#ca8a04", color: "#fff", textDecoration: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: 700, fontSize: "14px", whiteSpace: "nowrap", boxShadow: "0 4px 6px rgba(202, 138, 4, 0.2)" }}>
+                                    Verify as Student
+                                </Link>
+                            </div>
+                        )}
 
                         <div style={S.topGrid}>
                             {/* Profile Card Summary */}
@@ -1011,10 +1005,16 @@ export default function ProfilePage() {
                                 <div style={S.inputGroup}>
                                     <label style={S.inputLabel}>Phone Number</label>
                                     <input
-                                        type="text"
+                                        type="tel"
+                                        pattern="[0-9]{10}"
+                                        maxLength={10}
+                                        title="Phone number must be 10 digits"
                                         style={S.textInput}
                                         value={editForm.phone}
-                                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                            setEditForm({ ...editForm, phone: val });
+                                        }}
                                     />
                                 </div>
 
@@ -1129,4 +1129,4 @@ export default function ProfilePage() {
             )}
         </div>
     );
-}
+}

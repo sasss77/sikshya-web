@@ -1,26 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LandingPage from "@/app/_views/LandingPage";
 
 export default function Home() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Check your auth status here (e.g., check localStorage, cookies, or an auth state)
-    const isLoggedIn = localStorage.getItem("token"); // Example check
+    // Check auth status
+    const isLoggedIn = localStorage.getItem("token");
 
     if (isLoggedIn) {
       router.replace("/dashboard");
     } else {
-      router.replace("/login");
+      setLoading(false);
     }
   }, [router]);
 
-  // Return a clean loading state while the redirect resolves
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-black dark:border-zinc-700 dark:border-t-white" />
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-300 border-t-black dark:border-zinc-700 dark:border-t-white" />
+      </div>
+    );
+  }
+
+  return <LandingPage />;
 }
