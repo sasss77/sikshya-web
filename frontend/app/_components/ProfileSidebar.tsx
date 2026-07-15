@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { X, User, PieChart, BookOpen, GraduationCap, LogOut, Settings, ChevronRight, MessageSquare, Shield } from "lucide-react";
+import { X, User, PieChart, BookOpen, GraduationCap, LogOut, Settings, ChevronRight, MessageSquare, Shield, Library } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
+import { removeTokenCookie } from "@/lib/cookies";
 
 interface ProfileSidebarProps {
   open: boolean;
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
   { icon: PieChart, label: "My Summary", href: "/dashboard", color: "#0ea5e9" },
   { icon: User, label: "My Profile", href: "/dashboard/profile", color: "#0B4085" },
   { icon: GraduationCap, label: "My Learnings", href: "/dashboard/learnings", color: "#8b5cf6" },
+  { icon: Library, label: "Courses & Contents", href: "/dashboard/my-courses", color: "#db2777", tutorOnly: true },
   { icon: BookOpen, label: "MCQ Generator", href: "/dashboard/mcq", color: "#f59e0b", studentOnly: true },
   { icon: MessageSquare, label: "Messages", href: "/dashboard/messages", color: "#22c55e" },
 ];
@@ -24,6 +26,7 @@ export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Close on outside click
   useEffect(() => {
@@ -40,11 +43,21 @@ export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const executeLogout = async () => {
     localStorage.removeItem("token");
+    try {
+      await removeTokenCookie();
+    } catch (e) {
+      console.error("Failed to remove cookie", e);
+    }
     setUser(null);
     onClose();
-    router.replace("/login");
+    setShowLogoutConfirm(false);
+    window.location.href = "/";
   };
 
   const imageUrl = user?.profileImage
@@ -55,9 +68,16 @@ export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
     ? user.fullName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
 
-  const visibleItems = NAV_ITEMS.filter(item =>
-    !item.studentOnly || user?.role === "student"
-  );
+  const visibleItems = NAV_ITEMS.filter(item => {
+    if (item.studentOnly && user?.role !== "student") return false;
+    if (item.tutorOnly && user?.role !== "tutor") return false;
+    return true;
+  }).map(item => {
+    if (user?.role === "tutor" && item.label === "My Learnings") {
+      return { ...item, label: "My Earnings", href: "/dashboard/earnings" };
+    }
+    return item;
+  });
 
   return (
     <>
@@ -220,7 +240,7 @@ export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
             <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Your session is secure and encrypted</span>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
               gap: "0.6rem", padding: "0.75rem",
@@ -236,12 +256,55 @@ export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
         </div>
       </div>
 
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "1rem"
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: "16px", padding: "2rem",
+            width: "100%", maxWidth: "400px", boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+            textAlign: "center", animation: "slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem" }}>
+              <LogOut size={28} color="#ef4444" style={{ marginLeft: "4px" }} />
+            </div>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#1a202c", margin: "0 0 0.5rem" }}>Log Out?</h3>
+            <p style={{ fontSize: "0.95rem", color: "#64748b", margin: "0 0 2rem" }}>Are you sure you want to log out of your account?</p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "1.5px solid #e2e8f0", background: "#f8fafc", color: "#475569", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s ease" }}
+                className="modal-cancel-btn"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeLogout}
+                style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "none", background: "#ef4444", color: "#fff", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s ease", boxShadow: "0 4px 12px rgba(239,68,68,0.2)" }}
+                className="modal-logout-btn"
+              >
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .sidebar-nav-item:hover {
           background: #f8fafc !important;
         }
         .logout-btn:hover {
           background: #fee2e2 !important;
+        }
+        .modal-cancel-btn:hover { background: #f1f5f9 !important; }
+        .modal-logout-btn:hover { background: #dc2626 !important; }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </>

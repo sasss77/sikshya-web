@@ -15,12 +15,19 @@ const GUEST_LINKS = [
   { label: "How it Works", href: "/#how-it-works" },
 ];
 
-const AUTH_LINKS = [
+const STUDENT_AUTH_LINKS = [
   { label: "Home", href: "/" },
   { label: "Find Tutors", href: "/find-tutors" },
   { label: "My Bookings", href: "/dashboard/bookings" },
   { label: "My Learnings", href: "/dashboard/learnings" },
-  { label: "MCQ Generator", href: "/dashboard/mcq", studentOnly: true },
+  { label: "MCQ Generator", href: "/dashboard/mcq" },
+];
+
+const TUTOR_AUTH_LINKS = [
+  { label: "My Sessions", href: "/dashboard/bookings" },
+  { label: "My Courses", href: "/dashboard/my-courses" },
+  { label: "Profile Setup", href: "/dashboard/tutor-profile" },
+  { label: "Messages", href: "/dashboard/messages" },
 ];
 
 export default function Header() {
@@ -42,9 +49,7 @@ export default function Header() {
 
   if (hideHeader) return null;
 
-  const visibleAuthLinks = AUTH_LINKS.filter(l =>
-    !(l as any).studentOnly || user?.role === "student"
-  );
+  const visibleAuthLinks = user?.role === "tutor" ? TUTOR_AUTH_LINKS : STUDENT_AUTH_LINKS;
 
   const imageUrl = user?.profileImage
     ? `${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000"}${user.profileImage}`

@@ -91,6 +91,7 @@ export default function SignupForm() {
             fill
             style={{ objectFit: "cover" }}
             priority
+            sizes="50vw"
           />
         </div>
 
