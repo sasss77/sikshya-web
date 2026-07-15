@@ -16,116 +16,53 @@ import {
 /* ─── Mock tutor data (replace with API call) ─────────────────── */
 const ALL_TUTORS = [
   {
-    id: 1,
-    name: "Anish Shrestha",
-    subjects: ["Physics", "Mathematics"],
-    level: "+2 Science",
-    rating: 5.0,
-    reviews: 42,
-    tags: ["SLC Topper", "IOE Scholar"],
-    price: 800,
-    initials: "AS",
-    avatarColor: "#0B4085",
-    location: "Kathmandu",
+    id: 1, name: "Anish Shrestha", subjects: ["Physics", "Mathematics"], level: "+2 Science", rating: 5.0, reviews: 42, tags: ["SLC Topper", "IOE Scholar"], price: 800, initials: "AS", avatarColor: "#0B4085", location: "Kathmandu",
     bio: "IOE entrance ranker tutoring Physics and Mathematics for +2 and entrance prep.",
+    courses: [
+      { id: "c1", title: "Complete Mechanics for +2", modules: ["Kinematics", "Dynamics", "Work, Energy & Power", "Rotational Motion"] },
+      { id: "c2", title: "IOE Math Entrance Prep", modules: ["Calculus", "Algebra", "Co-ordinate Geometry", "Trigonometry"] }
+    ]
   },
   {
-    id: 2,
-    name: "Priya Sharma",
-    subjects: ["Biology", "Chemistry"],
-    level: "+2 Science",
-    rating: 4.9,
-    reviews: 38,
-    tags: ["Medical Student", "IOM Ranker"],
-    price: 750,
-    initials: "PS",
-    avatarColor: "#0ea5e9",
-    location: "Lalitpur",
+    id: 2, name: "Priya Sharma", subjects: ["Biology", "Chemistry"], level: "+2 Science", rating: 4.9, reviews: 38, tags: ["Medical Student", "IOM Ranker"], price: 750, initials: "PS", avatarColor: "#0ea5e9", location: "Lalitpur",
     bio: "IOM ranker helping students ace Biology and Chemistry for medical entrance.",
+    courses: [
+      { id: "c3", title: "Botany & Zoology Crash Course", modules: ["Cell Biology", "Genetics", "Human Physiology", "Ecology"] },
+      { id: "c4", title: "Organic Chemistry Fundamentals", modules: ["Alkanes & Alkenes", "Alcohols", "Aldehydes & Ketones"] }
+    ]
   },
   {
-    id: 3,
-    name: "Sohan Gurung",
-    subjects: ["Economics", "Accounting"],
-    level: "+2 Management",
-    rating: 4.8,
-    reviews: 29,
-    tags: ["CA Aspirant", "Business Pro"],
-    price: 600,
-    initials: "SG",
-    avatarColor: "#7c3aed",
-    location: "Bhaktapur",
+    id: 3, name: "Sohan Gurung", subjects: ["Economics", "Accounting"], level: "+2 Management", rating: 4.8, reviews: 29, tags: ["CA Aspirant", "Business Pro"], price: 600, initials: "SG", avatarColor: "#7c3aed", location: "Bhaktapur",
     bio: "CA aspirant teaching Economics and Accounts with focus on board exam strategies.",
+    courses: [
+      { id: "c5", title: "Class 12 Economics Core", modules: ["Microeconomics", "Macroeconomics", "Nepalese Economy"] },
+      { id: "c6", title: "Accounting for Beginners", modules: ["Journal Entries", "Ledger", "Final Accounts"] }
+    ]
   },
-  {
-    id: 4,
-    name: "Sita Rai",
-    subjects: ["English", "Nepali"],
-    level: "SEE",
-    rating: 4.7,
-    reviews: 56,
-    tags: ["Literature Graduate", "SEE Expert"],
-    price: 500,
-    initials: "SR",
-    avatarColor: "#ec4899",
-    location: "Kathmandu",
-    bio: "Literature graduate helping SEE students improve writing and grammar skills.",
+  { 
+    id: 4, name: "Sita Rai", subjects: ["English", "Nepali"], level: "SEE", rating: 4.7, reviews: 56, tags: ["Literature Graduate", "SEE Expert"], price: 500, initials: "SR", avatarColor: "#ec4899", location: "Kathmandu", 
+    bio: "Literature graduate helping SEE students improve writing and grammar skills.", 
+    courses: [{ id: "c7", title: "SEE English Prep", modules: ["Grammar Rules", "Essay Writing", "Reading Comprehension"] }]
   },
-  {
-    id: 5,
-    name: "Bikash Tamang",
-    subjects: ["Computer Science", "Mathematics"],
-    level: "+2 Science",
-    rating: 4.9,
-    reviews: 33,
-    tags: ["Software Engineer", "TU Ranker"],
-    price: 900,
-    initials: "BT",
-    avatarColor: "#10b981",
-    location: "Kathmandu",
-    bio: "Software engineer teaching CS fundamentals and Mathematics for entrance.",
+  { 
+    id: 5, name: "Bikash Tamang", subjects: ["Computer Science", "Mathematics"], level: "+2 Science", rating: 4.9, reviews: 33, tags: ["Software Engineer", "TU Ranker"], price: 900, initials: "BT", avatarColor: "#10b981", location: "Kathmandu", 
+    bio: "Software engineer teaching CS fundamentals and Mathematics for entrance.", 
+    courses: [{ id: "c8", title: "CS Basics (C Programming)", modules: ["Variables & Loops", "Functions", "Arrays & Pointers", "File Handling"] }]
   },
-  {
-    id: 6,
-    name: "Maya Adhikari",
-    subjects: ["Physics", "Chemistry"],
-    level: "+2 Science",
-    rating: 4.6,
-    reviews: 21,
-    tags: ["IOE Student"],
-    price: 700,
-    initials: "MA",
-    avatarColor: "#f59e0b",
-    location: "Pokhara",
-    bio: "IOE student with strong Physics and Chemistry background ready to tutor.",
+  { 
+    id: 6, name: "Maya Adhikari", subjects: ["Physics", "Chemistry"], level: "+2 Science", rating: 4.6, reviews: 21, tags: ["IOE Student"], price: 700, initials: "MA", avatarColor: "#f59e0b", location: "Pokhara", 
+    bio: "IOE student with strong Physics and Chemistry background ready to tutor.", 
+    courses: [{ id: "c9", title: "Physics Crash Course", modules: ["Optics", "Modern Physics", "Electricity & Magnetism"] }]
   },
-  {
-    id: 7,
-    name: "Roshan KC",
-    subjects: ["Mathematics", "Statistics"],
-    level: "+2 Management",
-    rating: 4.8,
-    reviews: 44,
-    tags: ["MBS Student", "TU Ranker"],
-    price: 650,
-    initials: "RK",
-    avatarColor: "#ef4444",
-    location: "Lalitpur",
-    bio: "MBS student specializing in Statistics and Business Mathematics.",
+  { 
+    id: 7, name: "Roshan KC", subjects: ["Mathematics", "Statistics"], level: "+2 Management", rating: 4.8, reviews: 44, tags: ["MBS Student", "TU Ranker"], price: 650, initials: "RK", avatarColor: "#ef4444", location: "Lalitpur", 
+    bio: "MBS student specializing in Statistics and Business Mathematics.", 
+    courses: [{ id: "c10", title: "Business Math & Stats", modules: ["Probability", "Linear Programming", "Matrices"] }]
   },
-  {
-    id: 8,
-    name: "Anjali Poudel",
-    subjects: ["Biology", "English"],
-    level: "SEE",
-    rating: 4.7,
-    reviews: 18,
-    tags: ["Nursing Graduate"],
-    price: 450,
-    initials: "AP",
-    avatarColor: "#6366f1",
-    location: "Bhaktapur",
-    bio: "Nursing graduate helping SEE students with Science and English fundamentals.",
+  { 
+    id: 8, name: "Anjali Poudel", subjects: ["Biology", "English"], level: "SEE", rating: 4.7, reviews: 18, tags: ["Nursing Graduate"], price: 450, initials: "AP", avatarColor: "#6366f1", location: "Bhaktapur", 
+    bio: "Nursing graduate helping SEE students with Science and English fundamentals.", 
+    courses: [{ id: "c11", title: "SEE Science Mastery", modules: ["Human Body", "Environment", "Force & Motion"] }]
   },
 ];
 
