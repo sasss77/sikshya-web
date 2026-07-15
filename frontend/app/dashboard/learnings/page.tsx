@@ -95,6 +95,48 @@ export const LEARNINGS: Course[] = [
   },
 ];
 
+/* ─── Global Course Catalog ──────────────────────────── */
+export const CATALOG_COURSES = [
+  { id: "c1", title: "Complete Mechanics for +2", tutorName: "Anish Shrestha", tutorId: 1, color: "#0B4085", modules: 4, level: "+2 Science", price: 800 },
+  { id: "c2", title: "IOE Math Entrance Prep", tutorName: "Anish Shrestha", tutorId: 1, color: "#0B4085", modules: 4, level: "Entrance", price: 800 },
+  { id: "c3", title: "Botany & Zoology Crash Course", tutorName: "Priya Sharma", tutorId: 2, color: "#0ea5e9", modules: 4, level: "+2 Science", price: 750 },
+  { id: "c4", title: "Organic Chemistry Fundamentals", tutorName: "Priya Sharma", tutorId: 2, color: "#0ea5e9", modules: 3, level: "+2 Science", price: 750 },
+  { id: "c5", title: "Class 12 Economics Core", tutorName: "Sohan Gurung", tutorId: 3, color: "#7c3aed", modules: 3, level: "+2 Management", price: 600 },
+  { id: "c6", title: "Accounting for Beginners", tutorName: "Sohan Gurung", tutorId: 3, color: "#7c3aed", modules: 3, level: "+2 Management", price: 600 },
+];
+
+/* ─── Catalog Course Card ────────────────────────────── */
+function CatalogCourseCard({ course }: { course: typeof CATALOG_COURSES[0] }) {
+  const router = useRouter();
+  return (
+    <div style={{
+      background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", padding: "1.5rem",
+      display: "flex", gap: "1.5rem", alignItems: "flex-start", cursor: "pointer",
+      boxShadow: "0 2px 12px rgba(11,64,133,0.04)", transition: "box-shadow 0.2s ease, transform 0.2s ease",
+    }} className="course-card" onClick={() => router.push(`/dashboard/learnings/${course.id}`)}>
+      <div style={{ width: "50px", height: "50px", borderRadius: "12px", background: course.color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <BookOpen size={24} color={course.color} />
+      </div>
+      <div style={{ flex: 1 }}>
+        <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1a202c", margin: "0 0 0.25rem" }}>{course.title}</h3>
+        <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          <span>By <strong>{course.tutorName}</strong></span> • <span>{course.modules} Modules</span> • <span>{course.level}</span>
+        </p>
+        <button
+          onClick={(e) => { e.stopPropagation(); router.push(`/tutors/${course.tutorId}`); }}
+          style={{
+            background: "linear-gradient(135deg, #0B4085, #1a56b3)", color: "#fff",
+            border: "none", borderRadius: "8px", padding: "0.5rem 1rem", fontSize: "0.825rem", fontWeight: 700, cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: "0.4rem"
+          }}
+        >
+          Book Tutor — Rs. {course.price} <ChevronRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Progress Bar ───────────────────────────────────── */
 function ProgressBar({ value, color = "#0B4085" }: { value: number; color?: string }) {
   return (
@@ -260,7 +302,7 @@ function StatCard({ icon: Icon, value, label, color, bg }: { icon: React.Element
 export default function LearningsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<CourseStatus | "all">("all");
+  const [activeTab, setActiveTab] = useState<"catalog" | CourseStatus>("catalog");
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -300,12 +342,8 @@ export default function LearningsPage() {
   const totalSessionsDone = LEARNINGS.reduce((sum, c) => sum + c.completedSessions, 0);
   const avgProgress = Math.round(LEARNINGS.reduce((sum, c) => sum + c.progress, 0) / LEARNINGS.length);
 
-  const filtered = activeTab === "all" ? LEARNINGS
-    : activeTab === "in_progress" ? inProgress
-    : completed;
-
   const TABS = [
-    { key: "all" as const, label: `All (${LEARNINGS.length})` },
+    { key: "catalog" as const, label: `All Courses (${CATALOG_COURSES.length})` },
     { key: "in_progress" as const, label: `In Progress (${inProgress.length})` },
     { key: "completed" as const, label: `Completed (${completed.length})` },
   ];
@@ -325,7 +363,7 @@ export default function LearningsPage() {
             </h1>
           </div>
           <p style={{ fontSize: "0.95rem", color: "#64748b", margin: 0 }}>
-            Track your learning journey, sessions, and progress across all subjects.
+            Browse available courses, start learning, and track your progress across all subjects.
           </p>
         </div>
 
@@ -380,20 +418,29 @@ export default function LearningsPage() {
           ))}
         </div>
 
-        {/* Course Cards */}
-        {filtered.length === 0 ? (
-          <div style={{ background: "#fff", borderRadius: "14px", padding: "3rem", textAlign: "center", border: "1px solid #e2e8f0" }}>
-            <GraduationCap size={40} color="#cbd5e0" style={{ margin: "0 auto 1rem" }} />
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.5rem" }}>Nothing here yet</h3>
-            <p style={{ fontSize: "0.875rem", color: "#64748b", margin: 0 }}>Book your first session to start learning!</p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {filtered.map(course => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
-        )}
+        {/* Content Area */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          {activeTab === "catalog" && (
+            CATALOG_COURSES.map(course => <CatalogCourseCard key={course.id} course={course} />)
+          )}
+
+          {activeTab === "in_progress" && (
+            inProgress.length === 0 ? (
+              <EmptyState message="You haven't started any courses yet." />
+            ) : (
+              inProgress.map(course => <CourseCard key={course.id} course={course} />)
+            )
+          )}
+
+          {activeTab === "completed" && (
+            completed.length === 0 ? (
+              <EmptyState message="You haven't completed any courses yet." />
+            ) : (
+              completed.map(course => <CourseCard key={course.id} course={course} />)
+            )
+          )}
+        </div>
+
       </div>
 
       <style>{`
@@ -406,3 +453,14 @@ export default function LearningsPage() {
     </div>
   );
 }
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div style={{ background: "#fff", borderRadius: "14px", padding: "3rem", textAlign: "center", border: "1px solid #e2e8f0" }}>
+      <GraduationCap size={40} color="#cbd5e0" style={{ margin: "0 auto 1rem" }} />
+      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.5rem" }}>Nothing here yet</h3>
+      <p style={{ fontSize: "0.875rem", color: "#64748b", margin: 0 }}>{message}</p>
+    </div>
+  );
+}
+

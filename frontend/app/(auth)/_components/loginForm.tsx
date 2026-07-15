@@ -71,6 +71,7 @@ export default function LoginForm() {
             fill
             style={{ objectFit: "cover" }}
             priority
+            sizes="50vw"
           />
         </div>
 

@@ -85,6 +85,21 @@ const TUTOR_BOOKINGS: Booking[] = [
   },
 ];
 
+const PENDING_REQUESTS: Booking[] = [
+  {
+    id: 10, tutorName: "You", studentName: "Priya Manandhar",
+    subject: "Engineering Physics", date: "2026-07-22", time: "11:00 AM",
+    duration: "90 min", status: "upcoming", price: "Rs. 1,200",
+    initials: "PM", avatarColor: "#8b5cf6",
+  },
+  {
+    id: 11, tutorName: "You", studentName: "Bikash Tamang",
+    subject: "Mathematics", date: "2026-07-25", time: "3:00 PM",
+    duration: "60 min", status: "upcoming", price: "Rs. 800",
+    initials: "BT", avatarColor: "#f59e0b",
+  },
+];
+
 /* ─── Status Config ──────────────────────────────────── */
 const STATUS_CONFIG = {
   upcoming: { label: "Upcoming", color: "#0B4085", bg: "#e8eef7", Icon: AlertCircle },
@@ -92,8 +107,11 @@ const STATUS_CONFIG = {
   cancelled: { label: "Cancelled", color: "#dc2626", bg: "#fee2e2", Icon: XCircle },
 };
 
-/* ─── Booking Card ───────────────────────────────────── */
-function BookingCard({ booking, role }: { booking: Booking; role: string }) {
+function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onShowToast }: {
+  booking: Booking; role: string; isPending?: boolean;
+  onAccept?: () => void; onDecline?: () => void;
+  onShowToast?: (msg: string, type?: "success" | "info" | "error") => void;
+}) {
   const router = useRouter();
   const status = STATUS_CONFIG[booking.status];
   const StatusIcon = status.Icon;
@@ -105,17 +123,17 @@ function BookingCard({ booking, role }: { booking: Booking; role: string }) {
     <div style={{
       background: "#fff",
       borderRadius: "14px",
-      border: "1px solid #e2e8f0",
+      border: isPending ? "2px solid #f59e0b" : "1px solid #e2e8f0",
       padding: "1.5rem",
       display: "flex",
       gap: "1.25rem",
       alignItems: "flex-start",
       transition: "box-shadow 0.2s ease, transform 0.2s ease",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-      cursor: "pointer",
+      boxShadow: isPending ? "0 4px 12px rgba(245,158,11,0.1)" : "0 1px 4px rgba(0,0,0,0.04)",
+      cursor: isPending ? "default" : "pointer",
     }}
-    className="booking-card"
-    onClick={() => alert(`Opening details for booking with ${personName}...`)}
+    className={isPending ? "" : "booking-card"}
+    onClick={() => !isPending && onShowToast?.(`Opening details for booking with ${personName}...`, "info")}
     >
       {/* Avatar */}
       <div style={{
@@ -135,13 +153,19 @@ function BookingCard({ booking, role }: { booking: Booking; role: string }) {
             <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a202c", margin: 0 }}>{personName}</h3>
             <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>{personLabel}</span>
           </div>
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: "0.3rem",
-            fontSize: "0.72rem", fontWeight: 600, padding: "0.25rem 0.75rem",
-            borderRadius: "999px", background: status.bg, color: status.color,
-          }}>
-            <StatusIcon size={12} /> {status.label}
-          </span>
+          {isPending ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.72rem", fontWeight: 700, padding: "0.25rem 0.75rem", borderRadius: "999px", background: "#fef3c7", color: "#d97706" }}>
+              ⏳ Pending
+            </span>
+          ) : (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: "0.3rem",
+              fontSize: "0.72rem", fontWeight: 600, padding: "0.25rem 0.75rem",
+              borderRadius: "999px", background: status.bg, color: status.color,
+            }}>
+              <StatusIcon size={12} /> {status.label}
+            </span>
+          )}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem" }}>
@@ -171,8 +195,26 @@ function BookingCard({ booking, role }: { booking: Booking; role: string }) {
           </div>
         )}
 
+        {/* Accept / Decline for pending */}
+        {isPending && (
+          <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onAccept?.(); }}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "#22c55e", color: "#fff", border: "none", borderRadius: "8px", padding: "0.5rem 1.1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
+            >
+              <CheckCircle size={14} /> Accept
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDecline?.(); }}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "8px", padding: "0.5rem 1.1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
+            >
+              <XCircle size={14} /> Decline
+            </button>
+          </div>
+        )}
+
         {/* Actions for upcoming */}
-        {isUpcoming && (
+        {isUpcoming && !isPending && (
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
             <button style={{
               display: "flex", alignItems: "center", gap: "0.4rem",
@@ -182,7 +224,7 @@ function BookingCard({ booking, role }: { booking: Booking; role: string }) {
             }}
             onClick={(e) => {
               e.stopPropagation();
-              alert("Joining call...");
+              onShowToast?.("Joining call...", "info");
             }}
             >
               <Video size={14} /> Join Call
@@ -204,7 +246,7 @@ function BookingCard({ booking, role }: { booking: Booking; role: string }) {
         )}
       </div>
 
-      <ChevronRight size={18} color="#cbd5e0" style={{ marginTop: "0.25rem", flexShrink: 0 }} />
+      {!isPending && <ChevronRight size={18} color="#cbd5e0" style={{ marginTop: "0.25rem", flexShrink: 0 }} />}
     </div>
   );
 }
@@ -213,7 +255,15 @@ function BookingCard({ booking, role }: { booking: Booking; role: string }) {
 export default function BookingsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<BookingStatus | "all">("all");
+  const [activeTab, setActiveTab] = useState<BookingStatus | "all" | "pending" | "earnings">("pending");
+  const [pendingRequests, setPendingRequests] = useState(PENDING_REQUESTS);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "info" | "error" } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ id: number; action: "accept" | "decline" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "info" | "error" = "info") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
@@ -229,21 +279,47 @@ export default function BookingsPage() {
 
   const role = user.role as "student" | "tutor";
   const bookings = role === "tutor" ? TUTOR_BOOKINGS : STUDENT_BOOKINGS;
-  const filtered = activeTab === "all" ? bookings : bookings.filter(b => b.status === activeTab);
+  const filtered = activeTab === "all" ? bookings : (activeTab === "pending" || activeTab === "earnings") ? [] : bookings.filter(b => b.status === activeTab);
+
+  const handleAcceptClick = (id: number) => setConfirmDialog({ id, action: "accept" });
+  const handleDeclineClick = (id: number) => setConfirmDialog({ id, action: "decline" });
+
+  const executeConfirm = () => {
+    if (!confirmDialog) return;
+    if (confirmDialog.action === "accept") {
+      showToast("Booking request accepted!", "success");
+    } else {
+      showToast("Booking request declined.", "error");
+    }
+    setPendingRequests(p => p.filter(r => r.id !== confirmDialog.id));
+    setConfirmDialog(null);
+  };
 
   const counts = {
     all: bookings.length,
+    pending: pendingRequests.length,
     upcoming: bookings.filter(b => b.status === "upcoming").length,
     completed: bookings.filter(b => b.status === "completed").length,
     cancelled: bookings.filter(b => b.status === "cancelled").length,
   };
 
-  const TABS: { key: BookingStatus | "all"; label: string }[] = [
-    { key: "all", label: `All (${counts.all})` },
-    { key: "upcoming", label: `Upcoming (${counts.upcoming})` },
-    { key: "completed", label: `Completed (${counts.completed})` },
-    { key: "cancelled", label: `Cancelled (${counts.cancelled})` },
-  ];
+  const totalEarned = TUTOR_BOOKINGS.filter(b => b.status === "completed")
+    .reduce((sum, b) => sum + parseInt(b.price.replace(/\D/g, "")), 0);
+
+  const TABS: { key: BookingStatus | "all" | "pending" | "earnings"; label: string }[] = role === "tutor"
+    ? [
+        { key: "pending", label: `Requests (${counts.pending})` },
+        { key: "all", label: `All Sessions (${counts.all})` },
+        { key: "upcoming", label: `Upcoming (${counts.upcoming})` },
+        { key: "completed", label: `Completed (${counts.completed})` },
+        { key: "earnings", label: "Earnings" },
+      ]
+    : [
+        { key: "all", label: `All (${counts.all})` },
+        { key: "upcoming", label: `Upcoming (${counts.upcoming})` },
+        { key: "completed", label: `Completed (${counts.completed})` },
+        { key: "cancelled", label: `Cancelled (${counts.cancelled})` },
+      ];
 
   return (
     <div style={{ background: "#f4f6fa", minHeight: "100vh" }}>
@@ -294,38 +370,162 @@ export default function BookingsPage() {
         </div>
 
         {/* Booking List */}
-        {filtered.length === 0 ? (
-          <div style={{ background: "#fff", borderRadius: "14px", padding: "3rem", textAlign: "center", border: "1px solid #e2e8f0" }}>
-            <Calendar size={48} color="#cbd5e0" style={{ margin: "0 auto 1rem" }} />
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.5rem" }}>No bookings found</h3>
-            <p style={{ fontSize: "0.875rem", color: "#64748b", margin: "0 0 1.5rem" }}>
-              {activeTab === "upcoming" ? "You have no upcoming sessions." : `No ${activeTab} sessions yet.`}
-            </p>
-            {role === "student" && (
-              <Link href="/find-tutors" style={{
-                display: "inline-flex", alignItems: "center", gap: "0.5rem",
-                background: "#0B4085", color: "#fff", textDecoration: "none",
-                borderRadius: "8px", padding: "0.65rem 1.5rem", fontSize: "0.875rem", fontWeight: 600,
-              }}>
-                Find a Tutor
-              </Link>
-            )}
-          </div>
-        ) : (
+        {activeTab === "pending" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {filtered.map(booking => (
-              <BookingCard key={booking.id} booking={booking} role={role} />
+            {pendingRequests.length === 0 ? (
+              <div style={{ background: "#fff", borderRadius: "14px", padding: "3rem", textAlign: "center", border: "1px solid #e2e8f0" }}>
+                <CheckCircle size={48} color="#22c55e" style={{ margin: "0 auto 1rem" }} />
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.5rem" }}>All caught up!</h3>
+                <p style={{ fontSize: "0.875rem", color: "#64748b", margin: 0 }}>No pending booking requests.</p>
+              </div>
+            ) : pendingRequests.map(r => (
+              <BookingCard key={r.id} booking={r} role={role} isPending onAccept={() => handleAcceptClick(r.id)} onDecline={() => handleDeclineClick(r.id)} onShowToast={showToast} />
             ))}
           </div>
         )}
+
+        {activeTab === "earnings" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {/* Earnings Summary */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+              {[
+                { label: "Total Earned", value: `Rs. ${totalEarned.toLocaleString()}`, color: "#16a34a", bg: "#dcfce7" },
+                { label: "This Month", value: "Rs. 2,000", color: "#0B4085", bg: "#e8eef7" },
+                { label: "Avg. per Session", value: `Rs. ${Math.round(totalEarned / Math.max(counts.completed, 1))}`, color: "#8b5cf6", bg: "#f3e8ff" },
+              ].map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: "14px", padding: "1.5rem", border: "1px solid #e2e8f0" }}>
+                  <p style={{ fontSize: "1.75rem", fontWeight: 900, color: s.color, margin: "0 0 0.3rem" }}>{s.value}</p>
+                  <p style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600, margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+            {/* Earnings per completed session */}
+            <div style={{ background: "#fff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+              <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+                <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a202c", margin: 0 }}>Session Earnings</h3>
+              </div>
+              {TUTOR_BOOKINGS.filter(b => b.status === "completed").map((b, i) => (
+                <div key={b.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1rem 1.5rem", borderBottom: i < counts.completed - 1 ? "1px solid #f8fafc" : "none" }}>
+                  <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: b.avatarColor, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.85rem", flexShrink: 0 }}>{b.initials}</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.1rem" }}>{b.studentName}</p>
+                    <p style={{ fontSize: "0.75rem", color: "#64748b", margin: 0 }}>{b.subject} · {new Date(b.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                  </div>
+                  <span style={{ fontSize: "1rem", fontWeight: 800, color: "#16a34a" }}>{b.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab !== "pending" && activeTab !== "earnings" && (
+          filtered.length === 0 ? (
+            <div style={{ background: "#fff", borderRadius: "14px", padding: "3rem", textAlign: "center", border: "1px solid #e2e8f0" }}>
+              <Calendar size={48} color="#cbd5e0" style={{ margin: "0 auto 1rem" }} />
+              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.5rem" }}>No bookings found</h3>
+              <p style={{ fontSize: "0.875rem", color: "#64748b", margin: "0 0 1.5rem" }}>
+                {activeTab === "upcoming" ? "You have no upcoming sessions." : `No ${activeTab} sessions yet.`}
+              </p>
+              {role === "student" && (
+                <Link href="/find-tutors" style={{
+                  display: "inline-flex", alignItems: "center", gap: "0.5rem",
+                  background: "#0B4085", color: "#fff", textDecoration: "none",
+                  borderRadius: "8px", padding: "0.65rem 1.5rem", fontSize: "0.875rem", fontWeight: 600,
+                }}>
+                  Find a Tutor
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {filtered.map(booking => (
+                <BookingCard key={booking.id} booking={booking} role={role} onShowToast={showToast} />
+              ))}
+            </div>
+          )
+        )}
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: "2rem", right: "2rem", zIndex: 1000,
+          background: toast.type === "success" ? "#22c55e" : toast.type === "error" ? "#ef4444" : "#3b82f6",
+          color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          fontWeight: 600, fontSize: "0.95rem",
+          animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+        }}>
+          {toast.type === "success" ? <CheckCircle size={18} /> : toast.type === "error" ? <XCircle size={18} /> : <AlertCircle size={18} />}
+          {toast.message}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "1rem"
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: "16px", padding: "2rem",
+            width: "100%", maxWidth: "400px", boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+            textAlign: "center", animation: "modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}>
+            <div style={{ width: "56px", height: "56px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem",
+              background: confirmDialog.action === "accept" ? "#dcfce7" : "#fee2e2",
+              color: confirmDialog.action === "accept" ? "#16a34a" : "#dc2626"
+            }}>
+              {confirmDialog.action === "accept" ? <CheckCircle size={28} /> : <XCircle size={28} />}
+            </div>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#1a202c", margin: "0 0 0.5rem" }}>
+              {confirmDialog.action === "accept" ? "Accept Request?" : "Decline Request?"}
+            </h3>
+            <p style={{ fontSize: "0.95rem", color: "#64748b", margin: "0 0 2rem" }}>
+              Are you sure you want to {confirmDialog.action} this booking request?
+            </p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button
+                onClick={() => setConfirmDialog(null)}
+                style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "1.5px solid #e2e8f0", background: "#f8fafc", color: "#475569", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s ease" }}
+                className="modal-cancel-btn"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeConfirm}
+                style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "none", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s ease",
+                  background: confirmDialog.action === "accept" ? "#22c55e" : "#ef4444", color: "#fff",
+                  boxShadow: confirmDialog.action === "accept" ? "0 4px 12px rgba(34,197,94,0.2)" : "0 4px 12px rgba(239,68,68,0.2)"
+                }}
+                className={confirmDialog.action === "accept" ? "modal-accept-btn" : "modal-decline-btn"}
+              >
+                Yes, {confirmDialog.action}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateY(20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         .booking-card:hover {
           box-shadow: 0 6px 24px rgba(11,64,133,0.1) !important;
           transform: translateY(-2px);
         }
+        .modal-cancel-btn:hover { background: #f1f5f9 !important; }
+        .modal-accept-btn:hover { background: #16a34a !important; }
+        .modal-decline-btn:hover { background: #dc2626 !important; }
       `}</style>
     </div>
   );

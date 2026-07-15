@@ -34,9 +34,11 @@ const QUICK_ACTIONS_STUDENT = [
 
 const QUICK_ACTIONS_TUTOR = [
   { icon: Calendar, label: "My Sessions", href: "/dashboard/bookings", color: "#0B4085", bg: "#e8eef7" },
+  { icon: BookOpen, label: "My Courses", href: "/dashboard/my-courses", color: "#0ea5e9", bg: "#e0f2fe" },
   { icon: MessageSquare, label: "Messages", href: "/dashboard/messages", color: "#8b5cf6", bg: "#f3e8ff" },
   { icon: Bell, label: "Notifications", href: "/dashboard/notifications", color: "#ef4444", bg: "#fee2e2" },
-  { icon: Search, label: "Find Students", href: "/find-tutors", color: "#22c55e", bg: "#dcfce7" },
+  { icon: Target, label: "Profile Setup", href: "/dashboard/tutor-profile", color: "#22c55e", bg: "#dcfce7" },
+  { icon: Search, label: "Find Students", href: "/find-tutors", color: "#f59e0b", bg: "#fef3c7" },
 ];
 
 const TUTOR_UPCOMING = [
@@ -497,7 +499,7 @@ function TutorDashboard({ name }: { name: string }) {
             <div style={{ background: "linear-gradient(135deg, #1e293b, #334155)", borderRadius: "16px", padding: "1.5rem", color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.25rem" }}>
                 <Award size={20} color="#f59e0b" />
-                <h3 style={{ fontSize: "0.95rem", fontWeight: 700, margin: 0 }}>My Summary</h3>
+                <h3 style={{ fontSize: "0.95rem", fontWeight: 700, margin: 0, color: "#fff" }}>My Summary</h3>
               </div>
               {[
                 { label: "Total Sessions", value: "5" },

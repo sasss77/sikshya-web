@@ -24,82 +24,78 @@ import {
 /* ─── Mock data (same as find-tutors — replace with API) ──────── */
 const ALL_TUTORS = [
   {
-    id: 1,
-    name: "Anish Shrestha",
-    subjects: ["Physics", "Mathematics"],
-    level: "+2 Science",
-    rating: 5.0,
-    reviews: 42,
-    tags: ["SLC Topper", "IOE Scholar"],
-    price: 800,
-    initials: "AS",
-    avatarColor: "#0B4085",
-    location: "Kathmandu",
+    id: 1, name: "Anish Shrestha", subjects: ["Physics", "Mathematics"], level: "+2 Science", rating: 5.0, reviews: 42, tags: ["SLC Topper", "IOE Scholar"], price: 800, initials: "AS", avatarColor: "#0B4085", location: "Kathmandu",
     bio: "IOE entrance ranker tutoring Physics and Mathematics for +2 and entrance prep. I scored in the top 50 of IOE entrance and have been tutoring students for 2 years. My sessions are focused on concept clarity and problem-solving techniques that help in board exams and entrance tests.",
-    availability: ["Mon", "Wed", "Fri", "Sat"],
-    experience: "2 years",
-    institution: "Pulchowk Campus, IOE",
-    languages: ["Nepali", "English"],
-    sessionTypes: ["Online", "In-person"],
+    availability: ["Mon", "Wed", "Fri", "Sat"], experience: "2 years", institution: "Pulchowk Campus, IOE", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"],
     achievements: ["IOE Entrance Rank 42", "SLC GPA 3.95", "2+ years tutoring experience"],
-    reviews_data: [
-      { name: "Ram Thapa", rating: 5, text: "Excellent teacher! Made complex Physics topics very easy to understand.", date: "2 weeks ago" },
-      { name: "Sita KC", rating: 5, text: "Very patient and thorough. My grades improved significantly.", date: "1 month ago" },
-      { name: "Hari Pokhrel", rating: 5, text: "Best Physics tutor I've had. Highly recommended!", date: "2 months ago" },
+    courses: [
+      { id: "c1", title: "Complete Mechanics for +2", modules: ["Kinematics", "Dynamics", "Work, Energy & Power", "Rotational Motion"] },
+      { id: "c2", title: "IOE Math Entrance Prep", modules: ["Calculus", "Algebra", "Co-ordinate Geometry", "Trigonometry"] }
     ],
+    reviews_data: [{ name: "Ram Thapa", rating: 5, text: "Excellent teacher! Made complex Physics topics very easy to understand.", date: "2 weeks ago" }, { name: "Sita KC", rating: 5, text: "Very patient and thorough. My grades improved significantly.", date: "1 month ago" }, { name: "Hari Pokhrel", rating: 5, text: "Best Physics tutor I've had. Highly recommended!", date: "2 months ago" }]
   },
   {
-    id: 2,
-    name: "Priya Sharma",
-    subjects: ["Biology", "Chemistry"],
-    level: "+2 Science",
-    rating: 4.9,
-    reviews: 38,
-    tags: ["Medical Student", "IOM Ranker"],
-    price: 750,
-    initials: "PS",
-    avatarColor: "#0ea5e9",
-    location: "Lalitpur",
+    id: 2, name: "Priya Sharma", subjects: ["Biology", "Chemistry"], level: "+2 Science", rating: 4.9, reviews: 38, tags: ["Medical Student", "IOM Ranker"], price: 750, initials: "PS", avatarColor: "#0ea5e9", location: "Lalitpur",
     bio: "IOM ranker helping students ace Biology and Chemistry for medical entrance. Currently studying MBBS and passionate about making science accessible to all students.",
-    availability: ["Tue", "Thu", "Sat", "Sun"],
-    experience: "1.5 years",
-    institution: "IOM, Maharajgunj",
-    languages: ["Nepali", "English"],
-    sessionTypes: ["Online", "In-person"],
+    availability: ["Tue", "Thu", "Sat", "Sun"], experience: "1.5 years", institution: "IOM, Maharajgunj", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"],
     achievements: ["IOM Entrance Rank 15", "SLC GPA 4.0", "Merit scholarship holder"],
-    reviews_data: [
-      { name: "Nisha Gurung", rating: 5, text: "Priya explains Biology concepts brilliantly. Very helpful for entrance prep.", date: "1 week ago" },
-      { name: "Bikram Rai", rating: 5, text: "Clear explanations and great study materials. Highly recommend!", date: "3 weeks ago" },
+    courses: [
+      { id: "c3", title: "Botany & Zoology Crash Course", modules: ["Cell Biology", "Genetics", "Human Physiology", "Ecology"] },
+      { id: "c4", title: "Organic Chemistry Fundamentals", modules: ["Alkanes & Alkenes", "Alcohols", "Aldehydes & Ketones"] }
     ],
+    reviews_data: [{ name: "Nisha Gurung", rating: 5, text: "Priya explains Biology concepts brilliantly. Very helpful for entrance prep.", date: "1 week ago" }, { name: "Bikram Rai", rating: 5, text: "Clear explanations and great study materials. Highly recommend!", date: "3 weeks ago" }]
   },
   {
-    id: 3,
-    name: "Sohan Gurung",
-    subjects: ["Economics", "Accounting"],
-    level: "+2 Management",
-    rating: 4.8,
-    reviews: 29,
-    tags: ["CA Aspirant", "Business Pro"],
-    price: 600,
-    initials: "SG",
-    avatarColor: "#7c3aed",
-    location: "Bhaktapur",
+    id: 3, name: "Sohan Gurung", subjects: ["Economics", "Accounting"], level: "+2 Management", rating: 4.8, reviews: 29, tags: ["CA Aspirant", "Business Pro"], price: 600, initials: "SG", avatarColor: "#7c3aed", location: "Bhaktapur",
     bio: "CA aspirant teaching Economics and Accounts with focus on board exam strategies.",
-    availability: ["Mon", "Tue", "Thu", "Sun"],
-    experience: "2 years",
-    institution: "TU, Faculty of Management",
-    languages: ["Nepali", "English"],
-    sessionTypes: ["Online", "In-person"],
+    availability: ["Mon", "Tue", "Thu", "Sun"], experience: "2 years", institution: "TU, Faculty of Management", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"],
     achievements: ["CA Foundation cleared", "TU Merit Scholarship", "District topper"],
-    reviews_data: [
-      { name: "Pooja Maharjan", rating: 5, text: "Great at breaking down complex Accounting concepts.", date: "2 weeks ago" },
+    courses: [
+      { id: "c5", title: "Class 12 Economics Core", modules: ["Microeconomics", "Macroeconomics", "Nepalese Economy"] },
+      { id: "c6", title: "Accounting for Beginners", modules: ["Journal Entries", "Ledger", "Final Accounts"] }
     ],
+    reviews_data: [{ name: "Pooja Maharjan", rating: 5, text: "Great at breaking down complex Accounting concepts.", date: "2 weeks ago" }]
   },
-  { id: 4, name: "Sita Rai", subjects: ["English", "Nepali"], level: "SEE", rating: 4.7, reviews: 56, tags: ["Literature Graduate"], price: 500, initials: "SR", avatarColor: "#ec4899", location: "Kathmandu", bio: "Literature graduate helping SEE students improve writing and grammar skills.", availability: ["Mon", "Wed", "Fri"], experience: "3 years", institution: "TU, Central Department of English", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"], achievements: ["English Literature Gold Medalist", "Published author"], reviews_data: [{ name: "Raju Thapa", rating: 5, text: "Best English tutor. My writing improved a lot!", date: "1 month ago" }] },
-  { id: 5, name: "Bikash Tamang", subjects: ["Computer Science", "Mathematics"], level: "+2 Science", rating: 4.9, reviews: 33, tags: ["Software Engineer", "TU Ranker"], price: 900, initials: "BT", avatarColor: "#10b981", location: "Kathmandu", bio: "Software engineer teaching CS fundamentals and Mathematics for entrance.", availability: ["Sat", "Sun"], experience: "2.5 years", institution: "Tribhuvan University, IOST", languages: ["Nepali", "English"], sessionTypes: ["Online"], achievements: ["Software Engineer at tech startup", "TU Computer Science Rank 1"], reviews_data: [{ name: "Deepa Lama", rating: 5, text: "Very knowledgeable. Explains CS concepts clearly.", date: "2 weeks ago" }] },
-  { id: 6, name: "Maya Adhikari", subjects: ["Physics", "Chemistry"], level: "+2 Science", rating: 4.6, reviews: 21, tags: ["IOE Student"], price: 700, initials: "MA", avatarColor: "#f59e0b", location: "Pokhara", bio: "IOE student with strong Physics and Chemistry background ready to tutor.", availability: ["Mon", "Tue", "Wed"], experience: "1 year", institution: "Pulchowk Campus, IOE", languages: ["Nepali"], sessionTypes: ["In-person"], achievements: ["IOE Entrance qualified", "District scholarship holder"], reviews_data: [{ name: "Anita Pun", rating: 5, text: "Very helpful and patient tutor!", date: "3 weeks ago" }] },
-  { id: 7, name: "Roshan KC", subjects: ["Mathematics", "Statistics"], level: "+2 Management", rating: 4.8, reviews: 44, tags: ["MBS Student", "TU Ranker"], price: 650, initials: "RK", avatarColor: "#ef4444", location: "Lalitpur", bio: "MBS student specializing in Statistics and Business Mathematics.", availability: ["Tue", "Thu", "Sat"], experience: "2 years", institution: "TU, Faculty of Management", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"], achievements: ["TU Management Topper", "Statistics Champion"], reviews_data: [{ name: "Sunita Basnet", rating: 4, text: "Good explanations for Statistics. Recommended.", date: "1 month ago" }] },
-  { id: 8, name: "Anjali Poudel", subjects: ["Biology", "English"], level: "SEE", rating: 4.7, reviews: 18, tags: ["Nursing Graduate"], price: 450, initials: "AP", avatarColor: "#6366f1", location: "Bhaktapur", bio: "Nursing graduate helping SEE students with Science and English fundamentals.", availability: ["Mon", "Wed", "Fri", "Sun"], experience: "1.5 years", institution: "BP Koirala Institute of Health Sciences", languages: ["Nepali"], sessionTypes: ["Online", "In-person"], achievements: ["Nursing Gold Medalist"], reviews_data: [{ name: "Prabin Shrestha", rating: 5, text: "Very good at teaching Biology. My SEE prep improved.", date: "2 weeks ago" }] },
+  { 
+    id: 4, name: "Sita Rai", subjects: ["English", "Nepali"], level: "SEE", rating: 4.7, reviews: 56, tags: ["Literature Graduate"], price: 500, initials: "SR", avatarColor: "#ec4899", location: "Kathmandu", 
+    bio: "Literature graduate helping SEE students improve writing and grammar skills.", 
+    availability: ["Mon", "Wed", "Fri"], experience: "3 years", institution: "TU, Central Department of English", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"], 
+    achievements: ["English Literature Gold Medalist", "Published author"], 
+    courses: [{ id: "c7", title: "SEE English Prep", modules: ["Grammar Rules", "Essay Writing", "Reading Comprehension"] }],
+    reviews_data: [{ name: "Raju Thapa", rating: 5, text: "Best English tutor. My writing improved a lot!", date: "1 month ago" }] 
+  },
+  { 
+    id: 5, name: "Bikash Tamang", subjects: ["Computer Science", "Mathematics"], level: "+2 Science", rating: 4.9, reviews: 33, tags: ["Software Engineer", "TU Ranker"], price: 900, initials: "BT", avatarColor: "#10b981", location: "Kathmandu", 
+    bio: "Software engineer teaching CS fundamentals and Mathematics for entrance.", 
+    availability: ["Sat", "Sun"], experience: "2.5 years", institution: "Tribhuvan University, IOST", languages: ["Nepali", "English"], sessionTypes: ["Online"], 
+    achievements: ["Software Engineer at tech startup", "TU Computer Science Rank 1"], 
+    courses: [{ id: "c8", title: "CS Basics (C Programming)", modules: ["Variables & Loops", "Functions", "Arrays & Pointers", "File Handling"] }],
+    reviews_data: [{ name: "Deepa Lama", rating: 5, text: "Very knowledgeable. Explains CS concepts clearly.", date: "2 weeks ago" }] 
+  },
+  { 
+    id: 6, name: "Maya Adhikari", subjects: ["Physics", "Chemistry"], level: "+2 Science", rating: 4.6, reviews: 21, tags: ["IOE Student"], price: 700, initials: "MA", avatarColor: "#f59e0b", location: "Pokhara", 
+    bio: "IOE student with strong Physics and Chemistry background ready to tutor.", 
+    availability: ["Mon", "Tue", "Wed"], experience: "1 year", institution: "Pulchowk Campus, IOE", languages: ["Nepali"], sessionTypes: ["In-person"], 
+    achievements: ["IOE Entrance qualified", "District scholarship holder"], 
+    courses: [{ id: "c9", title: "Physics Crash Course", modules: ["Optics", "Modern Physics", "Electricity & Magnetism"] }],
+    reviews_data: [{ name: "Anita Pun", rating: 5, text: "Very helpful and patient tutor!", date: "3 weeks ago" }] 
+  },
+  { 
+    id: 7, name: "Roshan KC", subjects: ["Mathematics", "Statistics"], level: "+2 Management", rating: 4.8, reviews: 44, tags: ["MBS Student", "TU Ranker"], price: 650, initials: "RK", avatarColor: "#ef4444", location: "Lalitpur", 
+    bio: "MBS student specializing in Statistics and Business Mathematics.", 
+    availability: ["Tue", "Thu", "Sat"], experience: "2 years", institution: "TU, Faculty of Management", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"], 
+    achievements: ["TU Management Topper", "Statistics Champion"], 
+    courses: [{ id: "c10", title: "Business Math & Stats", modules: ["Probability", "Linear Programming", "Matrices"] }],
+    reviews_data: [{ name: "Sunita Basnet", rating: 4, text: "Good explanations for Statistics. Recommended.", date: "1 month ago" }] 
+  },
+  { 
+    id: 8, name: "Anjali Poudel", subjects: ["Biology", "English"], level: "SEE", rating: 4.7, reviews: 18, tags: ["Nursing Graduate"], price: 450, initials: "AP", avatarColor: "#6366f1", location: "Bhaktapur", 
+    bio: "Nursing graduate helping SEE students with Science and English fundamentals.", 
+    availability: ["Mon", "Wed", "Fri", "Sun"], experience: "1.5 years", institution: "BP Koirala Institute of Health Sciences", languages: ["Nepali"], sessionTypes: ["Online", "In-person"], 
+    achievements: ["Nursing Gold Medalist"], 
+    courses: [{ id: "c11", title: "SEE Science Mastery", modules: ["Human Body", "Environment", "Force & Motion"] }],
+    reviews_data: [{ name: "Prabin Shrestha", rating: 5, text: "Very good at teaching Biology. My SEE prep improved.", date: "2 weeks ago" }] 
+  },
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -326,6 +322,31 @@ export default function TutorProfilePage() {
                 </div>
               </div>
             </div>
+
+            {/* Courses & Modules */}
+            {tutor.courses && tutor.courses.length > 0 && (
+              <div className="card" style={{ padding: "1.75rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <BookOpen size={16} color="var(--color-primary)" /> Syllabus & Modules
+                </h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                  {tutor.courses.map((course) => (
+                    <div key={course.id} style={{ padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)", background: "var(--color-bg-secondary)" }}>
+                      <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-text)", margin: "0 0 0.5rem" }}>
+                        {course.title}
+                      </h3>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                        {course.modules.map((mod: string, i: number) => (
+                          <span key={i} style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "var(--radius-sm)", background: "#fff", border: "1px solid #cbd5e1", color: "var(--color-text-muted)" }}>
+                            {i + 1}. {mod}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Achievements */}
             <div className="card" style={{ padding: "1.75rem" }}>
