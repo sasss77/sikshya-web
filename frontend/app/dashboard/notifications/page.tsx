@@ -27,52 +27,12 @@ interface NotificationItem {
   read: boolean;
 }
 
-/* ─── Dummy Data ─────────────────────────────────────── */
-const STUDENT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 1, type: "booking", title: "Booking Confirmed",
-    message: "Your session with Anish Shrestha for Engineering Physics has been confirmed for tomorrow at 10:00 AM.",
-    time: "2 hours ago", read: false,
-  },
-  {
-    id: 2, type: "message", title: "New Message from Priya",
-    message: "Priya Sharma: 'Please revise Chapter 5 before the session.'",
-    time: "4 hours ago", read: false,
-  },
-  {
-    id: 3, type: "system", title: "Welcome to Sikshya!",
-    message: "Your account has been fully verified. Start exploring tutors now.",
-    time: "2 days ago", read: true,
-  },
-  {
-    id: 4, type: "payment", title: "Payment Successful",
-    message: "Your payment of Rs. 600 for the Economics session was successful.",
-    time: "4 days ago", read: true,
-  },
-];
-
-const TUTOR_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 1, type: "booking", title: "New Booking Request",
-    message: "Rajan Thapa has requested a 90-min session for Engineering Physics.",
-    time: "1 hour ago", read: false,
-  },
-  {
-    id: 2, type: "system", title: "Profile Approved",
-    message: "Your tutor profile has been approved and is now visible to students.",
-    time: "5 hours ago", read: false,
-  },
-  {
-    id: 3, type: "message", title: "New Message from Sima",
-    message: "Sima Karki: 'Could we go over this in our next session?'",
-    time: "1 day ago", read: true,
-  },
-  {
-    id: 4, type: "payment", title: "Payout Processed",
-    message: "Your recent earnings of Rs. 1,600 have been transferred to your account.",
-    time: "3 days ago", read: true,
-  },
-];
+import {
+  fetchNotificationsAction,
+  markNotificationReadAction,
+  markAllNotificationsReadAction,
+  clearAllNotificationsAction,
+} from "@/lib/actions/notification-action";
 
 /* ─── Notification Config ───────────────────────────── */
 const TYPE_CONFIG = {
@@ -97,11 +57,27 @@ export default function NotificationsPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const loadNotifications = async () => {
+    const res = await fetchNotificationsAction();
+    if (res.success) {
+      setNotifications(res.data.map((n: any) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        read: n.read,
+        time: new Date(n.createdAt).toLocaleString(),
+      })));
+    } else {
+      showToast(res.error || "Failed to load notifications", "error");
+    }
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     } else if (user) {
-      setNotifications(user.role === "tutor" ? TUTOR_NOTIFICATIONS : STUDENT_NOTIFICATIONS);
+      loadNotifications();
     }
   }, [user, loading, router]);
 
@@ -115,18 +91,30 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    const res = await markAllNotificationsReadAction();
+    if (res.success) {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } else {
+      showToast(res.error || "Failed to mark all as read", "error");
+    }
   };
 
-  const clearAll = () => {
-    setNotifications([]);
-    setShowClearConfirm(false);
-    showToast("All notifications cleared!");
+  const clearAll = async () => {
+    const res = await clearAllNotificationsAction();
+    if (res.success) {
+      setNotifications([]);
+      setShowClearConfirm(false);
+      showToast("All notifications cleared!");
+    } else {
+      showToast(res.error || "Failed to clear notifications", "error");
+    }
   };
 
-  const markAsRead = (id: number) => {
+  const markAsRead = async (id: number | string) => {
+    // Optimistic update
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    await markNotificationReadAction(String(id));
   };
 
   const handleSend = () => {
@@ -134,13 +122,15 @@ export default function NotificationsPage() {
       showToast("Please fill all fields", "error");
       return;
     }
+    // We can't actually trigger notifications to others from frontend directly, this is a mock for demo
+    // The backend handles auto notifications.
     setNotifications(prev => [
-      { id: Date.now(), type: newNotif.type, title: newNotif.title, message: newNotif.message, time: "Just now", read: false },
+      { id: Date.now() as any, type: newNotif.type, title: newNotif.title, message: newNotif.message, time: "Just now", read: false },
       ...prev
     ]);
     setShowCompose(false);
     setNewNotif({ title: "", message: "", type: "message" });
-    showToast("Notification sent successfully!");
+    showToast("Notification sent successfully! (Mock)");
   };
 
   return (
