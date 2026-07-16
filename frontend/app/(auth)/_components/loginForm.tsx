@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import loginImage from "@/app/assets/loginImage.jpg";
+import { useUser } from "@/lib/context/UserContext";
 
 import { loginAction } from "@/lib/actions/auth-action";
 import { getUserAction } from "@/lib/actions/user-actions";
@@ -14,6 +15,7 @@ import { LoginInput, loginSchema } from "./schema";
 
 export default function LoginForm() {
   const router = useRouter();
+  const { refreshUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -38,12 +40,13 @@ export default function LoginForm() {
       const userRes = await getUserAction();
       const role = userRes.data?.role || result.data?.user?.role || result.data?.role;
 
-      // Use a full page navigation (not client-side push) so the freshly-set
-      // cookie is available to the server on the very first load of the target page.
+      // Refresh the user context
+      await refreshUser();
+
       if (role === "admin") {
-        window.location.href = "/admin/users";
+        router.push("/admin/users");
       } else {
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       }
     } else {
       setServerError(result.message);
