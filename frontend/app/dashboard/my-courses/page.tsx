@@ -1,12 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
 import {
   BookOpen, Plus, X, ChevronRight, Edit3, Users,
   DollarSign, Award, Search
 } from "lucide-react";
+import {
+  fetchMyCoursesAction,
+  createCourseAction,
+  editCourseAction,
+  deleteCourseAction,
+} from "@/lib/actions/course-action";
 
 const LEVELS_LIST = ["SEE", "+2 Science", "+2 Management", "Bachelor", "Entrance Prep"];
 
@@ -16,26 +22,7 @@ export interface Course {
   price: string; modules: Module[]; students: number; color: string;
 }
 
-export const INITIAL_COURSES: Course[] = [
-  {
-    id: 1, title: "Complete Mechanics for +2", subject: "Physics", level: "+2 Science", price: "800",
-    modules: [
-      { title: "Kinematics & Motion" },
-      { title: "Newton's Laws of Motion" },
-      { title: "Work, Energy & Power" },
-      { title: "Circular Motion & Gravitation" },
-    ], students: 5, color: "#0B4085",
-  },
-  {
-    id: 2, title: "IOE Math Entrance Prep", subject: "Mathematics", level: "Entrance Prep", price: "800",
-    modules: [
-      { title: "Algebra & Equations" },
-      { title: "Coordinate Geometry" },
-      { title: "Trigonometry" },
-      { title: "Calculus Basics" },
-    ], students: 3, color: "#0ea5e9",
-  },
-];
+export const INITIAL_COURSES: Course[] = [];
 
 const COLORS = ["#0B4085", "#0ea5e9", "#8b5cf6", "#22c55e", "#f59e0b", "#ec4899"];
 
@@ -175,19 +162,38 @@ function CourseFormModal({
 export default function MyCoursesPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  if (loading) {
+  useEffect(() => {
+    if (!user || user.role !== "tutor") return;
+    fetchMyCoursesAction().then(res => {
+      if (res.success && res.data) {
+        // Map backend _id to id for UI compatibility
+        const mapped = res.data.map((c: any, i: number) => ({
+          ...c,
+          id: c._id || i,
+          price: String(c.price ?? 0),
+          students: c.students ?? 0,
+          color: c.color || COLORS[i % COLORS.length],
+        }));
+        setCourses(mapped);
+      }
+      setPageLoading(false);
+    });
+  }, [user]);
+
+  if (loading || pageLoading) {
     return (
       <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: "32px", height: "32px", borderRadius: "50%", border: "4px solid #e2e8f0", borderTopColor: "#0B4085", animation: "spin 0.8s linear infinite" }} />
@@ -201,26 +207,51 @@ export default function MyCoursesPage() {
     c.subject.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = (data: Omit<Course, "id" | "students">) => {
+  const handleSave = async (data: Omit<Course, "id" | "students">) => {
     if (editingCourse) {
-      setCourses(prev => prev.map(c => c.id === editingCourse.id ? { ...c, ...data } : c));
-      showToast("Course updated successfully!");
+      const res = await editCourseAction(String(editingCourse.id), {
+        ...data,
+        price: Number(data.price),
+      });
+      if (res.success) {
+        setCourses(prev => prev.map(c => c.id === editingCourse.id ? { ...c, ...data } : c));
+        showToast("Course updated successfully!");
+      } else {
+        showToast(res.error || "Failed to update course", "error");
+      }
     } else {
-      setCourses(prev => [...prev, { ...data, id: Date.now(), students: 0 }]);
-      showToast("Course created successfully!");
+      const res = await createCourseAction({ ...data, price: Number(data.price) });
+      if (res.success && res.data) {
+        const newCourse = {
+          ...res.data,
+          id: res.data._id || Date.now(),
+          price: String(res.data.price ?? data.price),
+          students: 0,
+          color: data.color || COLORS[courses.length % COLORS.length],
+        };
+        setCourses(prev => [...prev, newCourse]);
+        showToast("Course created successfully!");
+      } else {
+        showToast(res.error || "Failed to create course", "error");
+      }
     }
     setShowModal(false);
     setEditingCourse(null);
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setConfirmDelete(id);
   };
 
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (confirmDelete !== null) {
-      setCourses(prev => prev.filter(c => c.id !== confirmDelete));
-      showToast("Course deleted successfully.", "error");
+      const res = await deleteCourseAction(confirmDelete);
+      if (res.success) {
+        setCourses(prev => prev.filter(c => String(c.id) !== confirmDelete));
+        showToast("Course deleted successfully.", "error");
+      } else {
+        showToast(res.error || "Failed to delete course", "error");
+      }
       setConfirmDelete(null);
     }
   };
@@ -333,7 +364,7 @@ export default function MyCoursesPage() {
                         </div>
                         <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                           <button
-                            onClick={() => router.push(`/dashboard/my-courses/${course.id}`)}
+                            onClick={() => router.push(`/dashboard/my-courses/${String(course.id)}`)}
                             style={{ display: "flex", alignItems: "center", gap: "0.35rem", background: "linear-gradient(135deg, #0ea5e9, #2563eb)", color: "#fff", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,0.2)" }}
                           >
                             <BookOpen size={13} /> Manage Contents
@@ -345,7 +376,7 @@ export default function MyCoursesPage() {
                             <Edit3 size={13} /> Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteClick(course.id)}
+                            onClick={() => handleDeleteClick(String(course.id))}
                             style={{ display: "flex", alignItems: "center", background: "#fee2e2", border: "none", borderRadius: "8px", padding: "0.4rem 0.6rem", cursor: "pointer" }}
                           >
                             <X size={14} color="#ef4444" />

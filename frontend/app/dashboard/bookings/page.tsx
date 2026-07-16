@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────── */
-type BookingStatus = "upcoming" | "completed" | "cancelled";
+type BookingStatus = "upcoming" | "completed" | "cancelled" | "pending";
 
 interface Booking {
   id: number;
@@ -36,75 +36,28 @@ interface Booking {
   rating?: number;
 }
 
-/* ─── Dummy Data ─────────────────────────────────────── */
-const STUDENT_BOOKINGS: Booking[] = [
-  {
-    id: 1, tutorName: "Anish Shrestha", studentName: "You",
-    subject: "Engineering Physics", date: "2026-07-18", time: "10:00 AM",
-    duration: "90 min", status: "upcoming", price: "Rs. 1,200",
-    initials: "AS", avatarColor: "#0B4085",
-  },
-  {
-    id: 2, tutorName: "Priya Sharma", studentName: "You",
-    subject: "Biology", date: "2026-07-20", time: "2:00 PM",
-    duration: "60 min", status: "upcoming", price: "Rs. 750",
-    initials: "PS", avatarColor: "#0ea5e9",
-  },
-  {
-    id: 3, tutorName: "Sohan Gurung", studentName: "You",
-    subject: "Economics", date: "2026-07-10", time: "4:00 PM",
-    duration: "60 min", status: "completed", price: "Rs. 600",
-    initials: "SG", avatarColor: "#7c3aed", rating: 5,
-  },
-  {
-    id: 4, tutorName: "Bikash Tamang", studentName: "You",
-    subject: "Mathematics", date: "2026-07-05", time: "11:00 AM",
-    duration: "90 min", status: "cancelled", price: "Rs. 900",
-    initials: "BT", avatarColor: "#ec4899",
-  },
-];
+import { fetchBookingsAction, updateBookingStatusAction } from "@/lib/actions/booking-action";
 
-const TUTOR_BOOKINGS: Booking[] = [
-  {
-    id: 1, tutorName: "You", studentName: "Rajan Thapa",
-    subject: "Engineering Physics", date: "2026-07-18", time: "10:00 AM",
-    duration: "90 min", status: "upcoming", price: "Rs. 1,200",
-    initials: "RT", avatarColor: "#0B4085",
-  },
-  {
-    id: 2, tutorName: "You", studentName: "Sima Karki",
-    subject: "Engineering Physics", date: "2026-07-21", time: "3:00 PM",
-    duration: "60 min", status: "upcoming", price: "Rs. 800",
-    initials: "SK", avatarColor: "#22c55e",
-  },
-  {
-    id: 3, tutorName: "You", studentName: "Rohan Shrestha",
-    subject: "Mathematics", date: "2026-07-08", time: "9:00 AM",
-    duration: "60 min", status: "completed", price: "Rs. 800",
-    initials: "RS", avatarColor: "#f59e0b", rating: 5,
-  },
-];
+// Helper to get initials and color from name
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+};
 
-const PENDING_REQUESTS: Booking[] = [
-  {
-    id: 10, tutorName: "You", studentName: "Priya Manandhar",
-    subject: "Engineering Physics", date: "2026-07-22", time: "11:00 AM",
-    duration: "90 min", status: "upcoming", price: "Rs. 1,200",
-    initials: "PM", avatarColor: "#8b5cf6",
-  },
-  {
-    id: 11, tutorName: "You", studentName: "Bikash Tamang",
-    subject: "Mathematics", date: "2026-07-25", time: "3:00 PM",
-    duration: "60 min", status: "upcoming", price: "Rs. 800",
-    initials: "BT", avatarColor: "#f59e0b",
-  },
-];
+const getAvatarColor = (name: string) => {
+  const colors = ["#0B4085", "#0ea5e9", "#7c3aed", "#ec4899", "#f59e0b", "#22c55e"];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
 
 /* ─── Status Config ──────────────────────────────────── */
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<BookingStatus, { label: string; color: string; bg: string; Icon: any }> = {
   upcoming: { label: "Upcoming", color: "#0B4085", bg: "#e8eef7", Icon: AlertCircle },
   completed: { label: "Completed", color: "#16a34a", bg: "#dcfce7", Icon: CheckCircle },
   cancelled: { label: "Cancelled", color: "#dc2626", bg: "#fee2e2", Icon: XCircle },
+  pending: { label: "Pending", color: "#f59e0b", bg: "#fef3c7", Icon: AlertCircle },
 };
 
 function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onShowToast }: {
@@ -255,18 +208,44 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
 export default function BookingsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<BookingStatus | "all" | "pending" | "earnings">("pending");
-  const [pendingRequests, setPendingRequests] = useState(PENDING_REQUESTS);
+  const [activeTab, setActiveTab] = useState<BookingStatus | "all" | "pending" | "earnings">("all");
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [toast, setToast] = useState<{ message: string; type: "success" | "info" | "error" } | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ id: number; action: "accept" | "decline" } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ id: string | number; action: "accept" | "decline" } | null>(null);
 
   const showToast = (message: string, type: "success" | "info" | "error" = "info") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  const loadBookings = async () => {
+    const res = await fetchBookingsAction();
+    if (res.success) {
+      setAllBookings(res.data.map((b: any) => ({
+        id: b.id,
+        tutorName: b.tutorName,
+        studentName: b.studentName,
+        subject: b.subject,
+        date: b.createdAt,
+        time: b.time,
+        duration: b.duration,
+        status: b.status,
+        price: `Rs. ${b.price}`,
+        initials: getInitials(user?.role === "tutor" ? b.studentName : b.tutorName),
+        avatarColor: getAvatarColor(user?.role === "tutor" ? b.studentName : b.tutorName),
+      })));
+    } else {
+      showToast(res.error || "Failed to load bookings", "error");
+    }
+  };
+
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
+    else if (user) {
+      // Set the correct default tab based on role
+      setActiveTab(user.role === "tutor" ? "pending" : "all");
+      loadBookings();
+    }
   }, [user, loading, router]);
 
   if (loading || !user) {
@@ -278,33 +257,47 @@ export default function BookingsPage() {
   }
 
   const role = user.role as "student" | "tutor";
-  const bookings = role === "tutor" ? TUTOR_BOOKINGS : STUDENT_BOOKINGS;
-  const filtered = activeTab === "all" ? bookings : (activeTab === "pending" || activeTab === "earnings") ? [] : bookings.filter(b => b.status === activeTab);
+  
+  // Students only see non-pending bookings; tutors also see pending requests
+  const pendingRequests = role === "tutor" ? allBookings.filter(b => b.status === "pending") : [];
+  const nonPendingBookings = allBookings.filter(b => b.status !== "pending");
+  
+  // For students: allBookings already excludes pending; tabs: all, upcoming, completed, cancelled
+  // For tutors: pending tab shows requests, other tabs show non-pending sessions
+  const filtered =
+    activeTab === "all" ? nonPendingBookings :
+    (activeTab === "pending" || activeTab === "earnings") ? [] :
+    nonPendingBookings.filter(b => b.status === activeTab);
 
-  const handleAcceptClick = (id: number) => setConfirmDialog({ id, action: "accept" });
-  const handleDeclineClick = (id: number) => setConfirmDialog({ id, action: "decline" });
+  const handleAcceptClick = (id: string | number) => setConfirmDialog({ id, action: "accept" });
+  const handleDeclineClick = (id: string | number) => setConfirmDialog({ id, action: "decline" });
 
-  const executeConfirm = () => {
+  const executeConfirm = async () => {
     if (!confirmDialog) return;
-    if (confirmDialog.action === "accept") {
-      showToast("Booking request accepted!", "success");
+    const status = confirmDialog.action === "accept" ? "upcoming" : "cancelled";
+    
+    const res = await updateBookingStatusAction(String(confirmDialog.id), status);
+    
+    if (res.success) {
+      showToast(`Booking request ${confirmDialog.action}ed!`, confirmDialog.action === "accept" ? "success" : "info");
+      loadBookings();
     } else {
-      showToast("Booking request declined.", "error");
+      showToast(res.error || "Failed to update booking status", "error");
     }
-    setPendingRequests(p => p.filter(r => r.id !== confirmDialog.id));
+    
     setConfirmDialog(null);
   };
 
   const counts = {
-    all: bookings.length,
+    all: nonPendingBookings.length,
     pending: pendingRequests.length,
-    upcoming: bookings.filter(b => b.status === "upcoming").length,
-    completed: bookings.filter(b => b.status === "completed").length,
-    cancelled: bookings.filter(b => b.status === "cancelled").length,
+    upcoming: nonPendingBookings.filter(b => b.status === "upcoming").length,
+    completed: nonPendingBookings.filter(b => b.status === "completed").length,
+    cancelled: nonPendingBookings.filter(b => b.status === "cancelled").length,
   };
 
-  const totalEarned = TUTOR_BOOKINGS.filter(b => b.status === "completed")
-    .reduce((sum, b) => sum + parseInt(b.price.replace(/\D/g, "")), 0);
+  const totalEarned = nonPendingBookings.filter(b => b.status === "completed")
+    .reduce((sum, b) => sum + parseInt(b.price.replace(/\D/g, "") || "0"), 0);
 
   const TABS: { key: BookingStatus | "all" | "pending" | "earnings"; label: string }[] = role === "tutor"
     ? [
@@ -404,7 +397,7 @@ export default function BookingsPage() {
               <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
                 <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a202c", margin: 0 }}>Session Earnings</h3>
               </div>
-              {TUTOR_BOOKINGS.filter(b => b.status === "completed").map((b, i) => (
+              {nonPendingBookings.filter(b => b.status === "completed").map((b, i) => (
                 <div key={b.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1rem 1.5rem", borderBottom: i < counts.completed - 1 ? "1px solid #f8fafc" : "none" }}>
                   <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: b.avatarColor, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "0.85rem", flexShrink: 0 }}>{b.initials}</div>
                   <div style={{ flex: 1 }}>
@@ -449,7 +442,7 @@ export default function BookingsPage() {
       {/* Toast Notification */}
       {toast && (
         <div style={{
-          position: "fixed", bottom: "2rem", right: "2rem", zIndex: 1000,
+          position: "fixed", top: "2rem", right: "2rem", zIndex: 1000,
           background: toast.type === "success" ? "#22c55e" : toast.type === "error" ? "#ef4444" : "#3b82f6",
           color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
           boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
