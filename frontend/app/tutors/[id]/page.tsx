@@ -21,84 +21,24 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-/* ─── Mock data (same as find-tutors — replace with API) ──────── */
-const ALL_TUTORS = [
-  {
-    id: 1, name: "Anish Shrestha", subjects: ["Physics", "Mathematics"], level: "+2 Science", rating: 5.0, reviews: 42, tags: ["SLC Topper", "IOE Scholar"], price: 800, initials: "AS", avatarColor: "#0B4085", location: "Kathmandu",
-    bio: "IOE entrance ranker tutoring Physics and Mathematics for +2 and entrance prep. I scored in the top 50 of IOE entrance and have been tutoring students for 2 years. My sessions are focused on concept clarity and problem-solving techniques that help in board exams and entrance tests.",
-    availability: ["Mon", "Wed", "Fri", "Sat"], experience: "2 years", institution: "Pulchowk Campus, IOE", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"],
-    achievements: ["IOE Entrance Rank 42", "SLC GPA 3.95", "2+ years tutoring experience"],
-    courses: [
-      { id: "c1", title: "Complete Mechanics for +2", modules: ["Kinematics", "Dynamics", "Work, Energy & Power", "Rotational Motion"] },
-      { id: "c2", title: "IOE Math Entrance Prep", modules: ["Calculus", "Algebra", "Co-ordinate Geometry", "Trigonometry"] }
-    ],
-    reviews_data: [{ name: "Ram Thapa", rating: 5, text: "Excellent teacher! Made complex Physics topics very easy to understand.", date: "2 weeks ago" }, { name: "Sita KC", rating: 5, text: "Very patient and thorough. My grades improved significantly.", date: "1 month ago" }, { name: "Hari Pokhrel", rating: 5, text: "Best Physics tutor I've had. Highly recommended!", date: "2 months ago" }]
-  },
-  {
-    id: 2, name: "Priya Sharma", subjects: ["Biology", "Chemistry"], level: "+2 Science", rating: 4.9, reviews: 38, tags: ["Medical Student", "IOM Ranker"], price: 750, initials: "PS", avatarColor: "#0ea5e9", location: "Lalitpur",
-    bio: "IOM ranker helping students ace Biology and Chemistry for medical entrance. Currently studying MBBS and passionate about making science accessible to all students.",
-    availability: ["Tue", "Thu", "Sat", "Sun"], experience: "1.5 years", institution: "IOM, Maharajgunj", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"],
-    achievements: ["IOM Entrance Rank 15", "SLC GPA 4.0", "Merit scholarship holder"],
-    courses: [
-      { id: "c3", title: "Botany & Zoology Crash Course", modules: ["Cell Biology", "Genetics", "Human Physiology", "Ecology"] },
-      { id: "c4", title: "Organic Chemistry Fundamentals", modules: ["Alkanes & Alkenes", "Alcohols", "Aldehydes & Ketones"] }
-    ],
-    reviews_data: [{ name: "Nisha Gurung", rating: 5, text: "Priya explains Biology concepts brilliantly. Very helpful for entrance prep.", date: "1 week ago" }, { name: "Bikram Rai", rating: 5, text: "Clear explanations and great study materials. Highly recommend!", date: "3 weeks ago" }]
-  },
-  {
-    id: 3, name: "Sohan Gurung", subjects: ["Economics", "Accounting"], level: "+2 Management", rating: 4.8, reviews: 29, tags: ["CA Aspirant", "Business Pro"], price: 600, initials: "SG", avatarColor: "#7c3aed", location: "Bhaktapur",
-    bio: "CA aspirant teaching Economics and Accounts with focus on board exam strategies.",
-    availability: ["Mon", "Tue", "Thu", "Sun"], experience: "2 years", institution: "TU, Faculty of Management", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"],
-    achievements: ["CA Foundation cleared", "TU Merit Scholarship", "District topper"],
-    courses: [
-      { id: "c5", title: "Class 12 Economics Core", modules: ["Microeconomics", "Macroeconomics", "Nepalese Economy"] },
-      { id: "c6", title: "Accounting for Beginners", modules: ["Journal Entries", "Ledger", "Final Accounts"] }
-    ],
-    reviews_data: [{ name: "Pooja Maharjan", rating: 5, text: "Great at breaking down complex Accounting concepts.", date: "2 weeks ago" }]
-  },
-  { 
-    id: 4, name: "Sita Rai", subjects: ["English", "Nepali"], level: "SEE", rating: 4.7, reviews: 56, tags: ["Literature Graduate"], price: 500, initials: "SR", avatarColor: "#ec4899", location: "Kathmandu", 
-    bio: "Literature graduate helping SEE students improve writing and grammar skills.", 
-    availability: ["Mon", "Wed", "Fri"], experience: "3 years", institution: "TU, Central Department of English", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"], 
-    achievements: ["English Literature Gold Medalist", "Published author"], 
-    courses: [{ id: "c7", title: "SEE English Prep", modules: ["Grammar Rules", "Essay Writing", "Reading Comprehension"] }],
-    reviews_data: [{ name: "Raju Thapa", rating: 5, text: "Best English tutor. My writing improved a lot!", date: "1 month ago" }] 
-  },
-  { 
-    id: 5, name: "Bikash Tamang", subjects: ["Computer Science", "Mathematics"], level: "+2 Science", rating: 4.9, reviews: 33, tags: ["Software Engineer", "TU Ranker"], price: 900, initials: "BT", avatarColor: "#10b981", location: "Kathmandu", 
-    bio: "Software engineer teaching CS fundamentals and Mathematics for entrance.", 
-    availability: ["Sat", "Sun"], experience: "2.5 years", institution: "Tribhuvan University, IOST", languages: ["Nepali", "English"], sessionTypes: ["Online"], 
-    achievements: ["Software Engineer at tech startup", "TU Computer Science Rank 1"], 
-    courses: [{ id: "c8", title: "CS Basics (C Programming)", modules: ["Variables & Loops", "Functions", "Arrays & Pointers", "File Handling"] }],
-    reviews_data: [{ name: "Deepa Lama", rating: 5, text: "Very knowledgeable. Explains CS concepts clearly.", date: "2 weeks ago" }] 
-  },
-  { 
-    id: 6, name: "Maya Adhikari", subjects: ["Physics", "Chemistry"], level: "+2 Science", rating: 4.6, reviews: 21, tags: ["IOE Student"], price: 700, initials: "MA", avatarColor: "#f59e0b", location: "Pokhara", 
-    bio: "IOE student with strong Physics and Chemistry background ready to tutor.", 
-    availability: ["Mon", "Tue", "Wed"], experience: "1 year", institution: "Pulchowk Campus, IOE", languages: ["Nepali"], sessionTypes: ["In-person"], 
-    achievements: ["IOE Entrance qualified", "District scholarship holder"], 
-    courses: [{ id: "c9", title: "Physics Crash Course", modules: ["Optics", "Modern Physics", "Electricity & Magnetism"] }],
-    reviews_data: [{ name: "Anita Pun", rating: 5, text: "Very helpful and patient tutor!", date: "3 weeks ago" }] 
-  },
-  { 
-    id: 7, name: "Roshan KC", subjects: ["Mathematics", "Statistics"], level: "+2 Management", rating: 4.8, reviews: 44, tags: ["MBS Student", "TU Ranker"], price: 650, initials: "RK", avatarColor: "#ef4444", location: "Lalitpur", 
-    bio: "MBS student specializing in Statistics and Business Mathematics.", 
-    availability: ["Tue", "Thu", "Sat"], experience: "2 years", institution: "TU, Faculty of Management", languages: ["Nepali", "English"], sessionTypes: ["Online", "In-person"], 
-    achievements: ["TU Management Topper", "Statistics Champion"], 
-    courses: [{ id: "c10", title: "Business Math & Stats", modules: ["Probability", "Linear Programming", "Matrices"] }],
-    reviews_data: [{ name: "Sunita Basnet", rating: 4, text: "Good explanations for Statistics. Recommended.", date: "1 month ago" }] 
-  },
-  { 
-    id: 8, name: "Anjali Poudel", subjects: ["Biology", "English"], level: "SEE", rating: 4.7, reviews: 18, tags: ["Nursing Graduate"], price: 450, initials: "AP", avatarColor: "#6366f1", location: "Bhaktapur", 
-    bio: "Nursing graduate helping SEE students with Science and English fundamentals.", 
-    availability: ["Mon", "Wed", "Fri", "Sun"], experience: "1.5 years", institution: "BP Koirala Institute of Health Sciences", languages: ["Nepali"], sessionTypes: ["Online", "In-person"], 
-    achievements: ["Nursing Gold Medalist"], 
-    courses: [{ id: "c11", title: "SEE Science Mastery", modules: ["Human Body", "Environment", "Force & Motion"] }],
-    reviews_data: [{ name: "Prabin Shrestha", rating: 5, text: "Very good at teaching Biology. My SEE prep improved.", date: "2 weeks ago" }] 
-  },
-];
+import { fetchTutorByIdAction } from "@/lib/actions/tutor-action";
+import { createBookingAction } from "@/lib/actions/booking-action";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// Helper to get initials and color from name
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+};
+
+const getAvatarColor = (name: string) => {
+  const colors = ["#0B4085", "#0ea5e9", "#7c3aed", "#ec4899", "#f59e0b", "#22c55e"];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
 
 function StarRow({ rating }: { rating: number }) {
   return (
@@ -113,8 +53,42 @@ function StarRow({ rating }: { rating: number }) {
 export default function TutorProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const id = Number(params.id);
-  const tutor = ALL_TUTORS.find((t) => t.id === id);
+  const id = String(params.id);
+  const [tutor, setTutor] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const loadTutor = async () => {
+      const res = await fetchTutorByIdAction(id);
+      if (res.success) {
+        const t = res.data;
+        setTutor({
+          id: t.userId,
+          name: t.name,
+          subjects: t.subjects || [],
+          level: (t.levels && t.levels.length > 0) ? t.levels[0] : "All Levels",
+          rating: 0,
+          reviews: 0,
+          tags: [],
+          price: t.hourlyRate || 500,
+          initials: getInitials(t.name),
+          avatarColor: getAvatarColor(t.name),
+          location: t.location || "Kathmandu",
+          bio: t.bio || "",
+          availability: t.availDays || [],
+          experience: t.experience || "",
+          institution: t.institution || "",
+          languages: t.languages || [],
+          sessionTypes: t.sessionTypes || [],
+          achievements: [],
+          courses: t.courses || [],
+          reviews_data: []
+        });
+      }
+      setLoading(false);
+    };
+    loadTutor();
+  }, [id]);
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -136,10 +110,26 @@ export default function TutorProfilePage() {
     setShowPayment(true);
   };
 
-  const handlePay = (e: React.FormEvent) => {
+  const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     setPayStep("processing");
-    setTimeout(() => setPayStep("success"), 2000);
+
+    // Make booking api call
+    const res = await createBookingAction({
+      tutorId: id,
+      subject: tutor.subjects[0] || "General",
+      day: selectedDay,
+      time: selectedTime,
+      duration: "60 min",
+      notes: "Booked via platform",
+    });
+
+    if (res.success) {
+      setPayStep("success");
+    } else {
+      alert(res.error || "Failed to book session");
+      setShowPayment(false);
+    }
   };
 
   const formatCardNumber = (v: string) => {
@@ -152,6 +142,14 @@ export default function TutorProfilePage() {
     if (digits.length >= 3) return digits.slice(0, 2) + "/" + digits.slice(2);
     return digits;
   };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "32px", height: "32px", borderRadius: "50%", border: "4px solid #e2e8f0", borderTopColor: "#0B4085", animation: "spin 0.8s linear infinite" }} />
+      </div>
+    );
+  }
 
   if (!tutor) {
     return (
@@ -246,10 +244,10 @@ export default function TutorProfilePage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.85rem", flexWrap: "wrap" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                       <StarRow rating={tutor.rating} />
-                      <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>{tutor.rating.toFixed(1)}</span>
+                      <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>{tutor.rating ? tutor.rating.toFixed(1) : "N/A"}</span>
                     </div>
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>({tutor.reviews} reviews)</span>
-                    {tutor.tags.map((tag) => (
+                    <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>({tutor.reviews || 0} reviews)</span>
+                    {tutor.tags.map((tag: string) => (
                       <span key={tag} style={{ fontSize: "0.7rem", fontWeight: 600, padding: "0.18rem 0.55rem", borderRadius: "var(--radius-full)", background: "var(--color-primary-light)", color: "var(--color-primary)" }}>
                         {tag}
                       </span>
@@ -272,7 +270,7 @@ export default function TutorProfilePage() {
                 <div>
                   <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Subjects</p>
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                    {tutor.subjects.map((s) => (
+                    {tutor.subjects.map((s: string) => (
                       <span key={s} style={{ fontSize: "0.8rem", fontWeight: 600, padding: "0.3rem 0.75rem", borderRadius: "var(--radius-full)", background: "var(--color-primary-light)", color: "var(--color-primary)" }}>
                         {s}
                       </span>
@@ -282,7 +280,7 @@ export default function TutorProfilePage() {
                 <div>
                   <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Session Type</p>
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                    {tutor.sessionTypes.map((s) => (
+                    {tutor.sessionTypes.map((s: string) => (
                       <span key={s} style={{ fontSize: "0.8rem", fontWeight: 600, padding: "0.3rem 0.75rem", borderRadius: "var(--radius-full)", background: "var(--color-bg-secondary)", color: "var(--color-text-muted)", border: "1px solid var(--color-border)" }}>
                         {s}
                       </span>
@@ -292,7 +290,7 @@ export default function TutorProfilePage() {
                 <div>
                   <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Languages</p>
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                    {tutor.languages.map((l) => (
+                    {tutor.languages.map((l: string) => (
                       <span key={l} style={{ fontSize: "0.8rem", fontWeight: 600, padding: "0.3rem 0.75rem", borderRadius: "var(--radius-full)", background: "var(--color-bg-secondary)", color: "var(--color-text-muted)", border: "1px solid var(--color-border)" }}>
                         {l}
                       </span>
@@ -302,7 +300,9 @@ export default function TutorProfilePage() {
                 <div>
                   <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>Available Days</p>
                   <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
-                    {DAYS.map((day) => (
+                    {DAYS.map((day) => {
+                      const isAvail = Array.isArray(tutor.availability) && tutor.availability.includes(day);
+                      return (
                       <span
                         key={day}
                         style={{
@@ -310,14 +310,14 @@ export default function TutorProfilePage() {
                           fontWeight: 600,
                           padding: "0.2rem 0.5rem",
                           borderRadius: "var(--radius-sm)",
-                          background: tutor.availability.includes(day) ? "var(--color-primary)" : "var(--color-bg-secondary)",
-                          color: tutor.availability.includes(day) ? "#fff" : "var(--color-text-light)",
-                          border: `1px solid ${tutor.availability.includes(day) ? "var(--color-primary)" : "var(--color-border)"}`,
+                          background: isAvail ? "var(--color-primary)" : "var(--color-bg-secondary)",
+                          color: isAvail ? "#fff" : "var(--color-text-light)",
+                          border: `1px solid ${isAvail ? "var(--color-primary)" : "var(--color-border)"}`,
                         }}
                       >
                         {day}
                       </span>
-                    ))}
+                    )})}
                   </div>
                 </div>
               </div>
@@ -330,7 +330,7 @@ export default function TutorProfilePage() {
                   <BookOpen size={16} color="var(--color-primary)" /> Syllabus & Modules
                 </h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                  {tutor.courses.map((course) => (
+                  {tutor.courses.map((course: any) => (
                     <div key={course.id} style={{ padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)", background: "var(--color-bg-secondary)" }}>
                       <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-text)", margin: "0 0 0.5rem" }}>
                         {course.title}
@@ -348,46 +348,48 @@ export default function TutorProfilePage() {
               </div>
             )}
 
-            {/* Achievements */}
-            <div className="card" style={{ padding: "1.75rem" }}>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Award size={16} color="var(--color-primary)" /> Achievements
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-                {tutor.achievements.map((ach) => (
-                  <div key={ach} style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.875rem" }}>
-                    <CheckCircle size={15} color="#22c55e" />
-                    <span style={{ color: "var(--color-text-muted)" }}>{ach}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Reviews */}
-            <div className="card" style={{ padding: "1.75rem" }}>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <MessageCircle size={16} color="var(--color-primary)" /> Student Reviews
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {tutor.reviews_data.map((rev, i) => (
-                  <div key={i} style={{ padding: "1rem", background: "var(--color-bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.72rem", fontWeight: 700 }}>
-                          {rev.name.charAt(0)}
-                        </div>
-                        <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{rev.name}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <StarRow rating={rev.rating} />
-                        <span style={{ fontSize: "0.72rem", color: "var(--color-text-light)" }}>{rev.date}</span>
-                      </div>
+            {tutor.achievements && tutor.achievements.length > 0 && (
+              <div className="card" style={{ padding: "1.75rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Award size={16} color="var(--color-primary)" /> Achievements
+                </h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+                  {tutor.achievements.map((ach: string) => (
+                    <div key={ach} style={{ display: "flex", alignItems: "center", gap: "0.6rem", fontSize: "0.875rem" }}>
+                      <CheckCircle size={15} color="#22c55e" />
+                      <span style={{ color: "var(--color-text-muted)" }}>{ach}</span>
                     </div>
-                    <p style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.55 }}>{rev.text}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {tutor.reviews_data && tutor.reviews_data.length > 0 && (
+              <div className="card" style={{ padding: "1.75rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <MessageCircle size={16} color="var(--color-primary)" /> Student Reviews
+                </h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {tutor.reviews_data.map((rev: any, i: number) => (
+                    <div key={i} style={{ padding: "1rem", background: "var(--color-bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.72rem", fontWeight: 700 }}>
+                            {rev.name.charAt(0)}
+                          </div>
+                          <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{rev.name}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <StarRow rating={rev.rating} />
+                          <span style={{ fontSize: "0.72rem", color: "var(--color-text-light)" }}>{rev.date}</span>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.55 }}>{rev.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── Right: Booking card ── */}
@@ -401,7 +403,7 @@ export default function TutorProfilePage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                   <StarRow rating={tutor.rating} />
-                  <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{tutor.rating.toFixed(1)} ({tutor.reviews})</span>
+                  <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{tutor.rating ? tutor.rating.toFixed(1) : "N/A"} ({tutor.reviews || 0})</span>
                 </div>
               </div>
 
@@ -411,7 +413,7 @@ export default function TutorProfilePage() {
                   <Calendar size={13} /> Select Day
                 </p>
                 <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                  {tutor.availability.map((day) => (
+                  {tutor.availability && Array.isArray(tutor.availability) && tutor.availability.map((day: string) => (
                     <button
                       key={day}
                       onClick={() => setSelectedDay(day === selectedDay ? null : day)}
