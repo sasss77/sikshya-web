@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────── */
-type NotificationType = "booking" | "message" | "system" | "payment";
+type NotificationType = "booking" | "message" | "system" | "payment" | "course";
 
 interface NotificationItem {
   id: number;
@@ -28,18 +28,21 @@ interface NotificationItem {
 }
 
 import {
-  fetchNotificationsAction,
-  markNotificationReadAction,
-  markAllNotificationsReadAction,
+  getMyNotificationsAction,
+  markReadAction,
+  markAllReadAction,
   clearAllNotificationsAction,
+  getMyStudentsAction,
+  sendNotificationAction,
 } from "@/lib/actions/notification-action";
 
 /* ─── Notification Config ───────────────────────────── */
-const TYPE_CONFIG = {
+const TYPE_CONFIG: Record<string, any> = {
   booking: { Icon: CalendarCheck, color: "#0B4085", bg: "#e8eef7" },
   message: { Icon: MessageCircle, color: "#8b5cf6", bg: "#f3e8ff" },
   system: { Icon: AlertCircle, color: "#f59e0b", bg: "#fef3c7" },
   payment: { Icon: CreditCard, color: "#10b981", bg: "#d1fae5" },
+  course: { Icon: MessageCircle, color: "#8b5cf6", bg: "#f3e8ff" },
 };
 
 /* ─── Main Component ─────────────────────────────────── */
@@ -49,8 +52,10 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showCompose, setShowCompose] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [newNotif, setNewNotif] = useState({ title: "", message: "", type: "message" as NotificationType });
+  const [students, setStudents] = useState<any[]>([]);
+  const [newNotif, setNewNotif] = useState({ studentId: "", title: "", message: "", type: "course" as NotificationType });
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [sending, setSending] = useState(false);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -58,7 +63,7 @@ export default function NotificationsPage() {
   };
 
   const loadNotifications = async () => {
-    const res = await fetchNotificationsAction();
+    const res = await getMyNotificationsAction();
     if (res.success) {
       setNotifications(res.data.map((n: any) => ({
         id: n.id,
@@ -92,7 +97,7 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllAsRead = async () => {
-    const res = await markAllNotificationsReadAction();
+    const res = await markAllReadAction();
     if (res.success) {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } else {
@@ -114,23 +119,45 @@ export default function NotificationsPage() {
   const markAsRead = async (id: number | string) => {
     // Optimistic update
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    await markNotificationReadAction(String(id));
+    await markReadAction(String(id));
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (!newNotif.studentId) {
+      showToast("Please select a student", "error");
+      return;
+    }
     if (!newNotif.title.trim() || !newNotif.message.trim()) {
       showToast("Please fill all fields", "error");
       return;
     }
-    // We can't actually trigger notifications to others from frontend directly, this is a mock for demo
-    // The backend handles auto notifications.
-    setNotifications(prev => [
-      { id: Date.now() as any, type: newNotif.type, title: newNotif.title, message: newNotif.message, time: "Just now", read: false },
-      ...prev
-    ]);
-    setShowCompose(false);
-    setNewNotif({ title: "", message: "", type: "message" });
-    showToast("Notification sent successfully! (Mock)");
+    
+    setSending(true);
+    const res = await sendNotificationAction({
+      studentId: newNotif.studentId,
+      title: newNotif.title,
+      message: newNotif.message,
+    });
+    setSending(false);
+
+    if (res.success) {
+      setShowCompose(false);
+      setNewNotif({ studentId: "", title: "", message: "", type: "course" });
+      showToast("Notification sent successfully!");
+      // Optionally reload notifications if tutor can see what they sent, but typically tutors just see received.
+    } else {
+      showToast(res.error || "Failed to send notification", "error");
+    }
+  };
+
+  const handleOpenCompose = async () => {
+    setShowCompose(true);
+    if (user?.role === "tutor" && students.length === 0) {
+      const res = await getMyStudentsAction();
+      if (res.success) {
+        setStudents(res.data);
+      }
+    }
   };
 
   return (
@@ -149,7 +176,7 @@ export default function NotificationsPage() {
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
             {user.role === "tutor" && (
               <button
-                onClick={() => setShowCompose(true)}
+                onClick={handleOpenCompose}
                 style={{
                   display: "flex", alignItems: "center", gap: "0.4rem",
                   background: "linear-gradient(135deg, #0B4085, #1a56b3)", border: "none", borderRadius: "8px",
@@ -205,7 +232,7 @@ export default function NotificationsPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {notifications.map((notif, idx) => {
-                const config = TYPE_CONFIG[notif.type];
+                const config = TYPE_CONFIG[notif.type] || TYPE_CONFIG.system;
                 const Icon = config.Icon;
                 return (
                   <div
@@ -256,7 +283,7 @@ export default function NotificationsPage() {
       {/* Toast Notification */}
       {toast && (
         <div style={{
-          position: "fixed", bottom: "2rem", right: "2rem", zIndex: 1000,
+          position: "fixed", top: "5rem", right: "2rem", zIndex: 1000,
           background: toast.type === "success" ? "#22c55e" : "#ef4444",
           color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
           boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
@@ -289,16 +316,18 @@ export default function NotificationsPage() {
             
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div>
-                <label style={{ fontSize: "0.82rem", fontWeight: 700, color: "#374151", marginBottom: "0.35rem", display: "block" }}>Notification Type</label>
+                <label style={{ fontSize: "0.82rem", fontWeight: 700, color: "#374151", marginBottom: "0.35rem", display: "block" }}>Select Student</label>
                 <select 
-                  value={newNotif.type} onChange={e => setNewNotif({...newNotif, type: e.target.value as NotificationType})}
+                  value={newNotif.studentId} onChange={e => setNewNotif({...newNotif, studentId: e.target.value})}
                   style={{ width: "100%", padding: "0.7rem 1rem", borderRadius: "10px", border: "1.5px solid #e2e8f0", fontSize: "0.9rem", outline: "none", fontFamily: "inherit", color: "#1e293b", background: "#fff", cursor: "pointer", boxSizing: "border-box" }}
                 >
-                  <option value="message">Message</option>
-                  <option value="system">System Alert</option>
-                  <option value="booking">Booking Update</option>
-                  <option value="payment">Payment Notice</option>
+                  <option value="" disabled>Select a student...</option>
+                  <option value="all">All My Students</option>
+                  {students.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.fullName} ({s.email})</option>
+                  ))}
                 </select>
+                {students.length === 0 && <p style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: "0.3rem" }}>You don't have any students yet.</p>}
               </div>
 
               <div>
@@ -321,7 +350,7 @@ export default function NotificationsPage() {
 
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
                 <button onClick={() => setShowCompose(false)} style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "1.5px solid #e2e8f0", background: "#f8fafc", color: "#475569", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s ease" }} className="modal-cancel-btn">Cancel</button>
-                <button onClick={handleSend} style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "none", background: "linear-gradient(135deg, #0B4085, #1a56b3)", color: "#fff", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s ease", boxShadow: "0 4px 12px rgba(11,64,133,0.2)" }} className="modal-send-btn">Send</button>
+                <button onClick={handleSend} disabled={sending || !newNotif.studentId} style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "none", background: sending || !newNotif.studentId ? "#94a3b8" : "linear-gradient(135deg, #0B4085, #1a56b3)", color: "#fff", fontSize: "0.9rem", fontWeight: 700, cursor: sending || !newNotif.studentId ? "not-allowed" : "pointer", transition: "all 0.15s ease", boxShadow: sending || !newNotif.studentId ? "none" : "0 4px 12px rgba(11,64,133,0.2)" }} className="modal-send-btn">{sending ? "Sending..." : "Send"}</button>
               </div>
             </div>
           </div>
@@ -369,7 +398,7 @@ export default function NotificationsPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .notif-item:hover { background: #f8fafc !important; }
         .modal-cancel-btn:hover { background: #f1f5f9 !important; }
