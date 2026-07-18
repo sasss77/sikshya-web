@@ -15,13 +15,15 @@ export const ENDPOINTS = {
   TUTOR_SEARCH: "/tutors/search",
   TUTOR_COURSES: "/tutors/courses",
   UPLOAD_COURSE_CONTENT: "/tutors/upload-content",
-  
+
   // Bookings & Learnings
   BOOKINGS: "/bookings",
   LEARNINGS: "/bookings/learnings",
-  
+
   // Notifications
   NOTIFICATIONS: "/notifications",
   NOTIFICATIONS_READ_ALL: "/notifications/read-all",
   NOTIFICATIONS_CLEAR_ALL: "/notifications/clear-all",
+  NOTIFICATIONS_MY_STUDENTS: "/notifications/my-students",
+  NOTIFICATIONS_SEND: "/notifications/send",
 };
