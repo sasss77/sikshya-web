@@ -186,12 +186,13 @@ export default function CourseContentsPage() {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: "fixed", bottom: "2rem", right: "2rem", zIndex: 1000,
+          position: "fixed", top: "5rem", right: "2rem", zIndex: 1000,
           background: toast.type === "success" ? "#22c55e" : "#ef4444",
           color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
           boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          display: "flex", alignItems: "center", gap: "0.75rem",
           fontWeight: 600, fontSize: "0.95rem",
-          animation: "toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
         }}>
           {toast.message}
         </div>
@@ -222,8 +223,10 @@ export default function CourseContentsPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        .module-row:hover { background: #f8fafc; }
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }.module-row:hover { background: #f8fafc; }
         .content-row:hover { background: #f1f5f9; }
       `}</style>
     </>

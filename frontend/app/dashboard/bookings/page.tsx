@@ -442,7 +442,7 @@ export default function BookingsPage() {
       {/* Toast Notification */}
       {toast && (
         <div style={{
-          position: "fixed", top: "2rem", right: "2rem", zIndex: 1000,
+          position: "fixed", top: "5rem", right: "2rem", zIndex: 1000,
           background: toast.type === "success" ? "#22c55e" : toast.type === "error" ? "#ef4444" : "#3b82f6",
           color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
           boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
@@ -505,11 +505,11 @@ export default function BookingsPage() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes toastSlideIn {
-          from { opacity: 0; transform: translateY(20px) scale(0.95); }
+          from { opacity: 0; transform: translateY(-20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes modalSlideUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .booking-card:hover {
@@ -523,3 +523,4 @@ export default function BookingsPage() {
     </div>
   );
 }
+
