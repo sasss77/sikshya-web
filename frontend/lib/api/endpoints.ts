@@ -18,6 +18,7 @@ export const ENDPOINTS = {
 
   // Bookings & Learnings
   BOOKINGS: "/bookings",
+  BOOKINGS_ENROLL: "/bookings/enroll",
   LEARNINGS: "/bookings/learnings",
 
   // Notifications
