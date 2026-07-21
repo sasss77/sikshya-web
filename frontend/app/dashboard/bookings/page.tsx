@@ -177,10 +177,11 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
             }}
             onClick={(e) => {
               e.stopPropagation();
-              onShowToast?.("Joining call...", "info");
+              onShowToast?.("Redirecting to Google Meet...", "info");
+              window.open("https://meet.google.com/new", "_blank");
             }}
             >
-              <Video size={14} /> Join Call
+              <Video size={14} /> Join on Meet
             </button>
             <button style={{
               display: "flex", alignItems: "center", gap: "0.4rem",
@@ -258,9 +259,9 @@ export default function BookingsPage() {
 
   const role = user.role as "student" | "tutor";
   
-  // Students only see non-pending bookings; tutors also see pending requests
+  // For tutors, separate pending requests. For students, keep them in the main list.
   const pendingRequests = role === "tutor" ? allBookings.filter(b => b.status === "pending") : [];
-  const nonPendingBookings = allBookings.filter(b => b.status !== "pending");
+  const nonPendingBookings = role === "tutor" ? allBookings.filter(b => b.status !== "pending") : allBookings;
   
   // For students: allBookings already excludes pending; tabs: all, upcoming, completed, cancelled
   // For tutors: pending tab shows requests, other tabs show non-pending sessions
@@ -310,6 +311,7 @@ export default function BookingsPage() {
     : [
         { key: "all", label: `All (${counts.all})` },
         { key: "upcoming", label: `Upcoming (${counts.upcoming})` },
+        { key: "pending", label: `Pending (${allBookings.filter(b => b.status === "pending").length})` },
         { key: "completed", label: `Completed (${counts.completed})` },
         { key: "cancelled", label: `Cancelled (${counts.cancelled})` },
       ];

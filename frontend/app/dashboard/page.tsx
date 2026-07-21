@@ -26,61 +26,8 @@ import {
   Users,
   BookMarked,
   ArrowUpRight,
+  XCircle,
 } from "lucide-react";
-
-/* ─── Dummy Data ─────────────────────────────────────── */
-const DUMMY_UPCOMING = [
-  {
-    id: 1,
-    tutor: "Anish Shrestha",
-    initials: "AS",
-    color: "#0B4085",
-    subject: "Engineering Physics",
-    date: "Jul 18",
-    time: "10:00 AM",
-    duration: "90 min",
-  },
-  {
-    id: 2,
-    tutor: "Priya Sharma",
-    initials: "PS",
-    color: "#0ea5e9",
-    subject: "Biology",
-    date: "Jul 20",
-    time: "2:00 PM",
-    duration: "60 min",
-  },
-];
-
-const DUMMY_IN_PROGRESS = [
-  {
-    id: 1,
-    subject: "Engineering Physics",
-    tutor: "Anish Shrestha",
-    progress: 60,
-    color: "#0B4085",
-    modules: 4,
-    total: 7,
-  },
-  {
-    id: 2,
-    subject: "Biology",
-    tutor: "Priya Sharma",
-    progress: 30,
-    color: "#0ea5e9",
-    modules: 2,
-    total: 6,
-  },
-  {
-    id: 3,
-    subject: "Economics",
-    tutor: "Sohan Gurung",
-    progress: 85,
-    color: "#8b5cf6",
-    modules: 6,
-    total: 7,
-  },
-];
 
 const QUICK_ACTIONS_STUDENT = [
   {
@@ -164,63 +111,14 @@ const QUICK_ACTIONS_TUTOR = [
     bg: "#dcfce7",
   },
   {
-    icon: Search,
-    label: "Find Students",
-    href: "/find-tutors",
+    icon: Activity,
+    label: "Recent Activity",
+    href: "/dashboard/recent-activity",
     color: "#f59e0b",
     bg: "#fef3c7",
   },
 ];
 
-const TUTOR_UPCOMING = [
-  {
-    id: 1,
-    student: "Rajan Thapa",
-    initials: "RT",
-    color: "#0B4085",
-    subject: "Engineering Physics",
-    date: "Jul 18",
-    time: "10:00 AM",
-    duration: "90 min",
-  },
-  {
-    id: 2,
-    student: "Sima Karki",
-    initials: "SK",
-    color: "#22c55e",
-    subject: "Engineering Physics",
-    date: "Jul 21",
-    time: "3:00 PM",
-    duration: "60 min",
-  },
-];
-
-const DUMMY_RECENT_ACTIVITY = [
-  {
-    icon: CheckCircle2,
-    text: "Completed Module 4 in Engineering Physics",
-    time: "2h ago",
-    color: "#22c55e",
-  },
-  {
-    icon: Star,
-    text: "Left feedback for Anish Shrestha's session",
-    time: "Yesterday",
-    color: "#f59e0b",
-  },
-  {
-    icon: BookOpen,
-    text: "Started Biology Module 2: Cell Division",
-    time: "2 days ago",
-    color: "#0ea5e9",
-  },
-  {
-    icon: Calendar,
-    text: "Booked session with Priya Sharma for Jul 20",
-    time: "3 days ago",
-    color: "#0B4085",
-  },
-];
 
 /* ─── Sub-components ─────────────────────────────────── */
 function StatCard({
@@ -398,14 +296,14 @@ function StudentDashboard({ name }: { name: string }) {
     );
   }
 
-  const UPCOMING = data?.upcoming || DUMMY_UPCOMING;
-  const IN_PROGRESS = data?.inProgress || DUMMY_IN_PROGRESS;
+  const UPCOMING = data?.upcoming || [];
+  const IN_PROGRESS = data?.inProgress || [];
   const RECENT_ACTIVITY = data?.recentActivity || [];
   const stats = data?.stats || {
-    upcomingSessions: 2,
-    activeCourses: 3,
-    sessionsDone: 6,
-    hoursLearned: 12,
+    upcomingSessions: 0,
+    activeCourses: 0,
+    sessionsDone: 0,
+    hoursLearned: 0,
   };
 
   const totalProgress =
@@ -1120,11 +1018,95 @@ function StudentDashboard({ name }: { name: string }) {
 }
 
 /* ─── Tutor Dashboard ────────────────────────────────── */
+import { fetchBookingsAction } from "@/lib/actions/booking-action";
+import { fetchMyTutorProfileAction } from "@/lib/actions/tutor-action";
+import { Activity } from "lucide-react";
+
+// Helpers
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  return name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+};
+
+const getAvatarColor = (name: string) => {
+  const colors = ["#0B4085", "#0ea5e9", "#7c3aed", "#ec4899", "#f59e0b", "#22c55e"];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
 function TutorDashboard({ name }: { name: string }) {
   const firstName = name.split(" ")[0];
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  const [loading, setLoading] = React.useState(true);
+  const [bookings, setBookings] = React.useState<any[]>([]);
+  const [profile, setProfile] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    Promise.all([fetchBookingsAction(), fetchMyTutorProfileAction()]).then(
+      ([bRes, pRes]) => {
+        if (bRes.success) setBookings(bRes.data);
+        if (pRes.success) setProfile(pRes.data);
+        setLoading(false);
+      }
+    );
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "32px", height: "32px", borderRadius: "50%", border: "4px solid #e2e8f0", borderTopColor: "#0B4085", animation: "spin 0.8s linear infinite" }} />
+      </div>
+    );
+  }
+
+  // Derive stats
+  const upcomingBookings = bookings.filter((b) => b.status === "upcoming");
+  const completedBookings = bookings.filter((b) => b.status === "completed");
+  
+  const totalEarned = completedBookings.reduce(
+    (sum, b) => sum + parseInt(b.price?.toString().replace(/\D/g, "") || "0"),
+    0
+  );
+
+  // Active Students (unique students with upcoming or completed sessions)
+  const activeStudentsMap = new Map();
+  bookings
+    .filter((b) => b.status === "upcoming" || b.status === "completed")
+    .forEach((b) => {
+      if (!activeStudentsMap.has(b.studentName)) {
+        activeStudentsMap.set(b.studentName, {
+          name: b.studentName,
+          initials: getInitials(b.studentName),
+          color: getAvatarColor(b.studentName),
+          subject: b.subject,
+          sessions: 0,
+        });
+      }
+      if (b.status === "completed") {
+        activeStudentsMap.get(b.studentName).sessions += 1;
+      }
+    });
+  const activeStudents = Array.from(activeStudentsMap.values());
+
+  // Recent Activity (derived from recent bookings or status updates)
+  const recentActivity = bookings
+    .slice(0, 4)
+    .map((b) => {
+      if (b.status === "pending") {
+        return { icon: Bell, text: `New booking request from ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#f59e0b" };
+      } else if (b.status === "completed") {
+        return { icon: CheckCircle2, text: `Completed session with ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#22c55e" };
+      } else if (b.status === "upcoming") {
+        return { icon: Calendar, text: `Accepted session with ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#0B4085" };
+      } else {
+        return { icon: XCircle, text: `Cancelled session with ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#ef4444" };
+      }
+    });
 
   return (
     <div style={{ background: "#f4f6fa", minHeight: "calc(100vh - 68px)" }}>
@@ -1186,7 +1168,7 @@ function TutorDashboard({ name }: { name: string }) {
             </h1>
             <p style={{ fontSize: "0.9rem", opacity: 0.8, margin: 0 }}>
               You have{" "}
-              <strong>{TUTOR_UPCOMING.length} upcoming sessions</strong>. Keep
+              <strong>{upcomingBookings.length} upcoming sessions</strong>. Keep
               inspiring!
             </p>
           </div>
@@ -1231,37 +1213,35 @@ function TutorDashboard({ name }: { name: string }) {
         >
           <StatCard
             icon={Calendar}
-            value={2}
+            value={upcomingBookings.length}
             label="Upcoming Sessions"
-            sub="This week"
+            sub="Total"
             color="#0B4085"
             bg="#e8eef7"
           />
           <StatCard
             icon={CheckCircle2}
-            value={3}
+            value={completedBookings.length}
             label="Completed Sessions"
             sub="Total"
             color="#22c55e"
             bg="#dcfce7"
-            trend="+1"
           />
           <StatCard
             icon={Star}
-            value="4.9"
+            value={profile?.averageRating?.toFixed(1) || "0.0"}
             label="Avg. Rating"
-            sub="From students"
+            sub={`${profile?.reviewCount || 0} reviews`}
             color="#f59e0b"
             bg="#fef3c7"
           />
           <StatCard
             icon={TrendingUp}
-            value="Rs.2,000"
+            value={`Rs.${totalEarned}`}
             label="Total Earned"
-            sub="This month"
+            sub="All time"
             color="#8b5cf6"
             bg="#f3e8ff"
-            trend="+Rs.500"
           />
         </div>
 
@@ -1323,7 +1303,7 @@ function TutorDashboard({ name }: { name: string }) {
                 </Link>
               </div>
               <div>
-                {TUTOR_UPCOMING.map((s, i) => (
+                {upcomingBookings.slice(0, 4).map((s, i) => (
                   <div
                     key={s.id}
                     style={{
@@ -1332,7 +1312,7 @@ function TutorDashboard({ name }: { name: string }) {
                       gap: "1rem",
                       alignItems: "center",
                       borderBottom:
-                        i < TUTOR_UPCOMING.length - 1
+                        i < Math.min(upcomingBookings.length, 4) - 1
                           ? "1px solid #f8fafc"
                           : "none",
                     }}
@@ -1342,7 +1322,7 @@ function TutorDashboard({ name }: { name: string }) {
                         width: "44px",
                         height: "44px",
                         borderRadius: "50%",
-                        background: s.color,
+                        background: getAvatarColor(s.studentName),
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
@@ -1350,10 +1330,9 @@ function TutorDashboard({ name }: { name: string }) {
                         fontWeight: 700,
                         fontSize: "0.9rem",
                         flexShrink: 0,
-                        boxShadow: `0 4px 10px ${s.color}44`,
                       }}
                     >
-                      {s.initials}
+                      {getInitials(s.studentName)}
                     </div>
                     <div style={{ flex: 1 }}>
                       <p
@@ -1364,7 +1343,7 @@ function TutorDashboard({ name }: { name: string }) {
                           margin: "0 0 0.15rem",
                         }}
                       >
-                        {s.student}
+                        {s.studentName}
                       </p>
                       <p
                         style={{
@@ -1379,7 +1358,7 @@ function TutorDashboard({ name }: { name: string }) {
                         <BookOpen size={12} color="#0B4085" /> {s.subject}
                       </p>
                     </div>
-                    <div style={{ textAlign: "right" }}>
+                    <div style={{ textAlign: "right", marginRight: "1rem" }}>
                       <p
                         style={{
                           fontSize: "0.8rem",
@@ -1388,7 +1367,7 @@ function TutorDashboard({ name }: { name: string }) {
                           margin: "0 0 0.1rem",
                         }}
                       >
-                        {s.date}
+                        {new Date(s.createdAt).toLocaleDateString()}
                       </p>
                       <p
                         style={{
@@ -1401,6 +1380,7 @@ function TutorDashboard({ name }: { name: string }) {
                       </p>
                     </div>
                     <button
+                      onClick={() => window.open("https://meet.google.com/new", "_blank")}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -1420,6 +1400,11 @@ function TutorDashboard({ name }: { name: string }) {
                     </button>
                   </div>
                 ))}
+                {upcomingBookings.length === 0 && (
+                  <div style={{ padding: "2rem", textAlign: "center", color: "#64748b", fontSize: "0.875rem" }}>
+                    No upcoming sessions found.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1453,22 +1438,7 @@ function TutorDashboard({ name }: { name: string }) {
                   <Users size={17} color="#0ea5e9" /> Active Students
                 </h2>
               </div>
-              {[
-                {
-                  name: "Rajan Thapa",
-                  initials: "RT",
-                  color: "#0B4085",
-                  subject: "Engineering Physics",
-                  sessions: 4,
-                },
-                {
-                  name: "Sima Karki",
-                  initials: "SK",
-                  color: "#22c55e",
-                  subject: "Engineering Physics",
-                  sessions: 2,
-                },
-              ].map((s, i) => (
+              {activeStudents.map((s, i) => (
                 <div
                   key={i}
                   style={{
@@ -1476,7 +1446,7 @@ function TutorDashboard({ name }: { name: string }) {
                     display: "flex",
                     gap: "0.85rem",
                     alignItems: "center",
-                    borderBottom: i === 0 ? "1px solid #f8fafc" : "none",
+                    borderBottom: i < activeStudents.length - 1 ? "1px solid #f8fafc" : "none",
                   }}
                 >
                   <div
@@ -1530,6 +1500,11 @@ function TutorDashboard({ name }: { name: string }) {
                   </span>
                 </div>
               ))}
+              {activeStudents.length === 0 && (
+                <div style={{ padding: "2rem", textAlign: "center", color: "#64748b", fontSize: "0.875rem" }}>
+                  No active students yet.
+                </div>
+              )}
             </div>
           </div>
 
@@ -1611,175 +1586,7 @@ function TutorDashboard({ name }: { name: string }) {
               </div>
             </div>
 
-            {/* Tutor summary */}
-            <div
-              style={{
-                background: "linear-gradient(135deg, #1e293b, #334155)",
-                borderRadius: "16px",
-                padding: "1.5rem",
-                color: "#fff",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.6rem",
-                  marginBottom: "1.25rem",
-                }}
-              >
-                <Award size={20} color="#f59e0b" />
-                <h3
-                  style={{
-                    fontSize: "0.95rem",
-                    fontWeight: 700,
-                    margin: 0,
-                    color: "#fff",
-                  }}
-                >
-                  My Summary
-                </h3>
-              </div>
-              {[
-                { label: "Total Sessions", value: "5" },
-                { label: "Hours Taught", value: "9h" },
-                { label: "Avg. Rating", value: "4.9 ★" },
-                { label: "Total Earned", value: "Rs.2,000" },
-              ].map((row, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.6rem 0",
-                    borderBottom:
-                      i < 3 ? "1px solid rgba(255,255,255,0.08)" : "none",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "0.8rem",
-                      color: "rgba(255,255,255,0.65)",
-                    }}
-                  >
-                    {row.label}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "0.9rem",
-                      fontWeight: 800,
-                      color: "#fff",
-                    }}
-                  >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
 
-            {/* Notifications */}
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "16px",
-                border: "1px solid #e2e8f0",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  padding: "1rem 1.25rem",
-                  borderBottom: "1px solid #f1f5f9",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: "0.95rem",
-                    fontWeight: 700,
-                    color: "#1a202c",
-                    margin: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                  }}
-                >
-                  <Bell size={15} color="#ef4444" /> Notifications
-                </h2>
-                <Link
-                  href="/dashboard/notifications"
-                  style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: "#ef4444",
-                    textDecoration: "none",
-                    background: "#fee2e2",
-                    padding: "0.15rem 0.5rem",
-                    borderRadius: "999px",
-                  }}
-                >
-                  2 new
-                </Link>
-              </div>
-              {[
-                {
-                  title: "New Booking Request",
-                  msg: "Rajan Thapa booked a 90-min session.",
-                },
-                {
-                  title: "Profile Approved",
-                  msg: "Your tutor profile is now live.",
-                },
-              ].map((n, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: "0.9rem 1.25rem",
-                    display: "flex",
-                    gap: "0.75rem",
-                    alignItems: "flex-start",
-                    borderBottom: i === 0 ? "1px solid #f8fafc" : "none",
-                    background: "#fafbfd",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: "#ef4444",
-                      marginTop: "0.35rem",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div>
-                    <p
-                      style={{
-                        fontSize: "0.82rem",
-                        fontWeight: 700,
-                        color: "#1a202c",
-                        margin: "0 0 0.1rem",
-                      }}
-                    >
-                      {n.title}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "0.74rem",
-                        color: "#64748b",
-                        margin: 0,
-                      }}
-                    >
-                      {n.msg}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
