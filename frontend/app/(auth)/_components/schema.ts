@@ -16,7 +16,7 @@ export const signupSchema = z
     phoneNumber: z.string().optional().refine((val) => !val || /^\d{10}$/.test(val), {
       message: "Phone number must be exactly 10 digits",
     }),
-    role: z.enum(["student", "tutor"], {
+    role: z.enum(["student", "tutor", "admin"], {
        error: "Please select a valid role" ,
     }),
     password: z

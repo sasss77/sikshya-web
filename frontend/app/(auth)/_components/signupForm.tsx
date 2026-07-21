@@ -202,6 +202,7 @@ export default function SignupForm() {
                     <option value="" disabled>Select your role</option>
                     <option value="student">Student</option>
                     <option value="tutor">Tutor</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </div>
                 {errors.role && <p style={styles.errorText}>{errors.role.message}</p>}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, User, Bell } from "lucide-react";
+import { Menu, X, User, Bell, Shield } from "lucide-react";
 import { useUser } from "@/lib/context/UserContext";
 import Image from "next/image";
 import logoIcon from "@/app/assets/mortarboard.png";
