@@ -107,6 +107,15 @@ const S: Record<string, React.CSSProperties> = {
   },
 };
 
+const IconDashboard = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="9"></rect>
+    <rect x="14" y="3" width="7" height="5"></rect>
+    <rect x="14" y="12" width="7" height="9"></rect>
+    <rect x="3" y="16" width="7" height="5"></rect>
+  </svg>
+);
+
 const IconUsers = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -116,9 +125,19 @@ const IconUsers = () => (
   </svg>
 );
 
+const IconBell = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+  </svg>
+);
+
+import { usePathname } from "next/navigation";
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
@@ -147,15 +166,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div style={S.root}>
       {/* Sidebar */}
       <aside style={S.sidebar}>
-        <Link href="/admin/users" style={S.logoContainer}>
+        <Link href="/admin" style={S.logoContainer}>
           Sikshya Admin
         </Link>
         <nav style={S.nav}>
-          <Link href="/admin/users" style={{ ...S.navItem, ...S.navItemActive }}>
+          <Link href="/admin" style={{ ...S.navItem, ...(pathname === "/admin" ? S.navItemActive : {}) }}>
+            <IconDashboard />
+            Dashboard
+          </Link>
+          <Link href="/admin/users" style={{ ...S.navItem, ...(pathname?.includes("/admin/users") ? S.navItemActive : {}) }}>
             <IconUsers />
             User Management
           </Link>
-          {/* Add more nav items here in the future */}
+          <Link href="/admin/requests" style={{ ...S.navItem, ...(pathname?.includes("/admin/requests") ? S.navItemActive : {}) }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            Requests
+          </Link>
+          <Link href="/admin/notifications" style={{ ...S.navItem, ...(pathname?.includes("/admin/notifications") ? S.navItemActive : {}) }}>
+            <IconBell />
+            Notices
+          </Link>
         </nav>
       </aside>
 
