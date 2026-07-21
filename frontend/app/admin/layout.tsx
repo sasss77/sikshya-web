@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/context/UserContext";
+import { logoutAction } from "@/lib/actions/auth-action";
 
 const S: Record<string, React.CSSProperties> = {
   root: {
@@ -135,9 +136,15 @@ const IconBell = () => (
 import { usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useUser();
+  const { user, loading, refreshUser } = useUser();
   const router = useRouter();
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await logoutAction();
+    await refreshUser();
+    router.push("/login");
+  };
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
@@ -191,6 +198,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Notices
           </Link>
         </nav>
+
+        {/* Logout Section */}
+        <div style={{ padding: "24px", borderTop: "1px solid #334155" }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              ...S.navItem,
+              width: "100%",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "#ef4444",
+              display: "flex",
+              justifyContent: "flex-start",
+              padding: "12px 16px",
+              marginTop: "auto"
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}

@@ -45,11 +45,7 @@ export default function LoginForm() {
       await refreshUser();
 
       if (role === "admin") {
-        if (!isVerifiedAdmin) {
-          setServerError("Please wait until an admin verifies your request.");
-        } else {
-          router.push("/admin");
-        }
+        router.push("/admin");
       } else {
         router.push("/dashboard");
       }
