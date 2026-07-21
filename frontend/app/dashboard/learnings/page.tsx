@@ -219,7 +219,7 @@ function StatCard({ icon: Icon, value, label, color, bg }: { icon: React.Element
 export default function LearningsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<CourseStatus>("in_progress");
+  const [activeTab, setActiveTab] = useState<CourseStatus>("not_started");
   const [learnings, setLearnings] = useState<Course[]>([]);
   const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
 
@@ -228,15 +228,15 @@ export default function LearningsPage() {
     if (res.success) {
       setLearnings(res.data.map((l: any) => ({
         id: l.id,
-        subject: l.courseName,
+        subject: l.subject || l.courseName || "Course",
         tutorName: l.tutorName,
         tutorInitials: getInitials(l.tutorName),
         tutorColor: getAvatarColor(l.tutorName),
         progress: l.progress,
         totalSessions: l.totalSessions,
         completedSessions: l.completedSessions,
-        nextSession: null, // we could fetch upcoming bookings to correlate this
-        status: l.status,
+        nextSession: l.nextSession || null,
+        status: l.status || "not_started",
         topics: l.topics,
       })));
     } else {
@@ -279,12 +279,14 @@ export default function LearningsPage() {
     );
   }
 
+  const notStarted = learnings.filter(c => c.status === "not_started");
   const inProgress = learnings.filter(c => c.status === "in_progress");
   const completed = learnings.filter(c => c.status === "completed");
   const totalSessionsDone = learnings.reduce((sum, c) => sum + c.completedSessions, 0);
   const avgProgress = learnings.length > 0 ? Math.round(learnings.reduce((sum, c) => sum + c.progress, 0) / learnings.length) : 0;
 
   const TABS = [
+    { key: "not_started" as const, label: `Not Started (${notStarted.length})` },
     { key: "in_progress" as const, label: `In Progress (${inProgress.length})` },
     { key: "completed" as const, label: `Completed (${completed.length})` },
   ];
@@ -361,6 +363,14 @@ export default function LearningsPage() {
 
         {/* Content Area */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          {activeTab === "not_started" && (
+            notStarted.length === 0 ? (
+              <EmptyState message="No courses added yet. Browse tutors and add courses to your learnings!" />
+            ) : (
+              notStarted.map(course => <CourseCard key={course.id} course={course} />)
+            )
+          )}
+
           {activeTab === "in_progress" && (
             inProgress.length === 0 ? (
               <EmptyState message="You haven't started any courses yet." />
