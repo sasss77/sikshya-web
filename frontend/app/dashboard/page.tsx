@@ -1601,7 +1601,6 @@ export default function DashboardHomePage() {
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
-    if (!loading && user?.role === "admin") router.replace("/admin/dashboard");
   }, [user, loading, router]);
 
   if (loading || !user) {
