@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 /* ─── Types ─────────────────────────────────────────── */
-type BookingStatus = "upcoming" | "completed" | "cancelled" | "pending";
+type BookingStatus = "upcoming" | "completed" | "cancelled" | "pending" | "expired";
 
 interface Booking {
   id: number;
@@ -34,6 +34,8 @@ interface Booking {
   initials: string;
   avatarColor: string;
   rating?: number;
+  studentId?: string;
+  tutorId?: string;
 }
 
 import { fetchBookingsAction, updateBookingStatusAction } from "@/lib/actions/booking-action";
@@ -58,11 +60,13 @@ const STATUS_CONFIG: Record<BookingStatus, { label: string; color: string; bg: s
   completed: { label: "Completed", color: "#16a34a", bg: "#dcfce7", Icon: CheckCircle },
   cancelled: { label: "Cancelled", color: "#dc2626", bg: "#fee2e2", Icon: XCircle },
   pending: { label: "Pending", color: "#f59e0b", bg: "#fef3c7", Icon: AlertCircle },
+  expired: { label: "Expired", color: "#64748b", bg: "#f1f5f9", Icon: Clock },
 };
 
-function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onShowToast }: {
+function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onMarkComplete, onShowToast }: {
   booking: Booking; role: string; isPending?: boolean;
   onAccept?: () => void; onDecline?: () => void;
+  onMarkComplete?: () => void;
   onShowToast?: (msg: string, type?: "success" | "info" | "error") => void;
 }) {
   const router = useRouter();
@@ -88,24 +92,43 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
     className={isPending ? "" : "booking-card"}
     onClick={() => !isPending && onShowToast?.(`Opening details for booking with ${personName}...`, "info")}
     >
-      {/* Avatar */}
-      <div style={{
-        width: "52px", height: "52px", borderRadius: "50%",
-        background: booking.avatarColor, display: "flex",
-        alignItems: "center", justifyContent: "center",
-        fontSize: "1.1rem", fontWeight: 700, color: "#fff",
-        flexShrink: 0,
-      }}>
-        {booking.initials}
+      {/* Avatar & Main Info Wrapper for Clickable Profile Navigation */}
+      <div 
+        style={{ display: "flex", gap: "1.25rem", cursor: "pointer", alignItems: "flex-start" }}
+        onClick={(e) => {
+          if (isPending) return;
+          e.stopPropagation();
+          const targetPath = role === "tutor" ? `/students/${booking.studentId}` : `/tutors/${booking.tutorId}`;
+          onShowToast?.(`Opening profile...`, "info");
+          router.push(targetPath);
+        }}
+      >
+        {/* Avatar */}
+        <div style={{
+          width: "52px", height: "52px", borderRadius: "50%",
+          background: booking.avatarColor, display: "flex",
+          alignItems: "center", justifyContent: "center",
+          fontSize: "1.1rem", fontWeight: 700, color: "#fff",
+          flexShrink: 0,
+        }}>
+          {booking.initials}
+        </div>
+
+        {/* Name Info */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a202c", margin: 0, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              {personName}
+            </h3>
+            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>{personLabel}</span>
+          </div>
+        </div>
       </div>
 
       {/* Main Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.4rem", flexWrap: "wrap", gap: "0.5rem" }}>
-          <div>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a202c", margin: 0 }}>{personName}</h3>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>{personLabel}</span>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: "0.4rem", flexWrap: "wrap", gap: "0.5rem" }}>
+
           {isPending ? (
             <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", fontSize: "0.72rem", fontWeight: 700, padding: "0.25rem 0.75rem", borderRadius: "999px", background: "#fef3c7", color: "#d97706" }}>
               ⏳ Pending
@@ -168,7 +191,7 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
 
         {/* Actions for upcoming */}
         {isUpcoming && !isPending && (
-          <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
+          <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
             <button style={{
               display: "flex", alignItems: "center", gap: "0.4rem",
               background: "#0B4085", color: "#fff", border: "none",
@@ -196,6 +219,19 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
             >
               <MessageSquare size={14} /> Message
             </button>
+            {role === "tutor" && onMarkComplete && (
+              <button
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.4rem",
+                  background: "#dcfce7", color: "#16a34a", border: "1px solid #bbf7d0",
+                  borderRadius: "8px", padding: "0.45rem 1rem",
+                  fontSize: "0.8rem", fontWeight: 700, cursor: "pointer",
+                }}
+                onClick={(e) => { e.stopPropagation(); onMarkComplete(); }}
+              >
+                <CheckCircle size={14} /> Mark as Complete
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -224,6 +260,8 @@ export default function BookingsPage() {
     if (res.success) {
       setAllBookings(res.data.map((b: any) => ({
         id: b.id,
+        studentId: b.studentId,
+        tutorId: b.tutorId,
         tutorName: b.tutorName,
         studentName: b.studentName,
         subject: b.subject,
@@ -261,17 +299,33 @@ export default function BookingsPage() {
   
   // For tutors, separate pending requests. For students, keep them in the main list.
   const pendingRequests = role === "tutor" ? allBookings.filter(b => b.status === "pending") : [];
-  const nonPendingBookings = role === "tutor" ? allBookings.filter(b => b.status !== "pending") : allBookings;
-  
-  // For students: allBookings already excludes pending; tabs: all, upcoming, completed, cancelled
-  // For tutors: pending tab shows requests, other tabs show non-pending sessions
+  // For students: exclude both pending and expired from the general non-pending pool (they have their own tab).
+  // For tutors: exclude pending (handled separately), keep expired visible in its own tab.
+  const nonPendingBookings = role === "tutor"
+    ? allBookings.filter(b => b.status !== "pending")
+    : allBookings.filter(b => b.status !== "pending" && b.status !== "expired");
+
+  // "all" tab shows non-pending (and for students: non-expired) bookings.
+  // "upcoming" tab should never include expired bookings.
   const filtered =
     activeTab === "all" ? nonPendingBookings :
     (activeTab === "pending" || activeTab === "earnings") ? [] :
-    nonPendingBookings.filter(b => b.status === activeTab);
+    activeTab === "expired"
+      ? allBookings.filter(b => b.status === "expired")
+      : nonPendingBookings.filter(b => b.status === activeTab);
 
   const handleAcceptClick = (id: string | number) => setConfirmDialog({ id, action: "accept" });
   const handleDeclineClick = (id: string | number) => setConfirmDialog({ id, action: "decline" });
+
+  const handleMarkComplete = async (id: string | number) => {
+    const res = await updateBookingStatusAction(String(id), "completed");
+    if (res.success) {
+      showToast("Session marked as completed!", "success");
+      loadBookings();
+    } else {
+      showToast(res.error || "Failed to mark session as complete", "error");
+    }
+  };
 
   const executeConfirm = async () => {
     if (!confirmDialog) return;
@@ -295,6 +349,7 @@ export default function BookingsPage() {
     upcoming: nonPendingBookings.filter(b => b.status === "upcoming").length,
     completed: nonPendingBookings.filter(b => b.status === "completed").length,
     cancelled: nonPendingBookings.filter(b => b.status === "cancelled").length,
+    expired: nonPendingBookings.filter(b => b.status === "expired").length,
   };
 
   const totalEarned = nonPendingBookings.filter(b => b.status === "completed")
@@ -306,6 +361,7 @@ export default function BookingsPage() {
         { key: "all", label: `All Sessions (${counts.all})` },
         { key: "upcoming", label: `Upcoming (${counts.upcoming})` },
         { key: "completed", label: `Completed (${counts.completed})` },
+        { key: "expired", label: `Expired (${counts.expired})` },
         { key: "earnings", label: "Earnings" },
       ]
     : [
@@ -314,6 +370,7 @@ export default function BookingsPage() {
         { key: "pending", label: `Pending (${allBookings.filter(b => b.status === "pending").length})` },
         { key: "completed", label: `Completed (${counts.completed})` },
         { key: "cancelled", label: `Cancelled (${counts.cancelled})` },
+        { key: "expired", label: `Expired (${counts.expired})` },
       ];
 
   return (
@@ -434,7 +491,13 @@ export default function BookingsPage() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {filtered.map(booking => (
-                <BookingCard key={booking.id} booking={booking} role={role} onShowToast={showToast} />
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  role={role}
+                  onShowToast={showToast}
+                  onMarkComplete={role === "tutor" && booking.status === "upcoming" ? () => handleMarkComplete(booking.id) : undefined}
+                />
               ))}
             </div>
           )
