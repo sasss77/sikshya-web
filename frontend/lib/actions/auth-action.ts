@@ -6,7 +6,7 @@ import { setTokenCookie, removeTokenCookie } from "../cookies";
 export const registerAction = async (data: {
   fullName: string;
   email: string;
-  role: "student" | "tutor";
+  role: "student" | "tutor" | "admin";
   password: string;
   phoneNumber?: string;
 }) => {
