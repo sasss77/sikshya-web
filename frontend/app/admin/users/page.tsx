@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Search, Plus, Edit2, Trash2, X, ChevronLeft, ChevronRight, AlertCircle, Loader2, Eye, EyeOff, LogOut } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth-action";
+import { useUser } from "@/lib/context/UserContext";
 
 // --- Types ---
 type User = {
@@ -321,6 +322,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
+  const { user } = useUser();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -519,9 +521,11 @@ export default function AdminUsersPage() {
                     <button style={S.actionBtn} onClick={() => handleOpenModal(u)} title="Edit">
                       <Edit2 size={16} />
                     </button>
-                    <button style={{ ...S.actionBtn, color: "#ef4444" }} onClick={() => handleOpenDelete(u.id)} title="Delete">
-                      <Trash2 size={16} />
-                    </button>
+                    {user?.id !== u.id && (
+                      <button style={{ ...S.actionBtn, color: "#ef4444" }} onClick={() => handleOpenDelete(u.id)} title="Delete">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
