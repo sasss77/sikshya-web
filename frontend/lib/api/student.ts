@@ -52,3 +52,17 @@ export const getStudentDashboardApi = async (token: string) => {
 
   return response.data;
 };
+
+/**
+ * GET /api/students/:id
+ * Fetches the public profile of a student.
+ */
+export const getStudentByIdApi = async (token: string, id: string) => {
+  const response = await axiosInstance.get(`${ENDPOINTS.STUDENT_PROFILE.replace('/profile', '')}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
