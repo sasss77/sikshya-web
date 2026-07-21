@@ -75,15 +75,20 @@ const FEATURED_TUTORS = [
 function TutorCard({
   tutor,
 }: {
-  tutor: (typeof FEATURED_TUTORS)[0];
+  tutor: any;
 }) {
+  const tutorName = tutor.userId?.fullName || "Tutor";
+  const initials = tutorName.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2);
+  const avatarColor = "#0B4085"; // default color
+  const price = tutor.hourlyRate ? `Rs. ${tutor.hourlyRate}` : "Free";
+
   return (
     <div className="card tutor-card" style={{ overflow: "hidden" }}>
       {/* Avatar area */}
       <div
         style={{
           height: "180px",
-          background: `linear-gradient(135deg, ${tutor.avatarColor}22, ${tutor.avatarColor}44)`,
+          background: `linear-gradient(135deg, ${avatarColor}22, ${avatarColor}44)`,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -109,7 +114,7 @@ function TutorCard({
             width: "80px",
             height: "80px",
             borderRadius: "50%",
-            background: tutor.avatarColor,
+            background: avatarColor,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -119,7 +124,7 @@ function TutorCard({
             boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
           }}
         >
-          {tutor.initials}
+          {initials}
         </div>
       </div>
 
@@ -141,7 +146,7 @@ function TutorCard({
               color: "var(--color-text)",
             }}
           >
-            {tutor.name}
+            {tutorName}
           </h3>
           <span
             style={{
@@ -154,7 +159,7 @@ function TutorCard({
             }}
           >
             <Star size={13} fill="#f59e0b" stroke="none" />
-            {tutor.rating.toFixed(1)}
+            {tutor.rating || "4.9"}
           </span>
         </div>
 
@@ -163,9 +168,10 @@ function TutorCard({
             fontSize: "0.78rem",
             color: "var(--color-text-muted)",
             marginBottom: "0.75rem",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
           }}
         >
-          {tutor.subjects}
+          {tutor.subjects?.join(" · ") || "General"}
         </p>
 
         {/* Tags */}
@@ -175,9 +181,10 @@ function TutorCard({
             gap: "0.4rem",
             flexWrap: "wrap",
             marginBottom: "1rem",
+            minHeight: "22px"
           }}
         >
-          {tutor.tags.map((tag) => (
+          {(tutor.tags && tutor.tags.length > 0 ? tutor.tags.slice(0,2) : [tutor.educationLevel || "Expert"]).map((tag: string) => (
             <span
               key={tag}
               style={{
@@ -211,7 +218,7 @@ function TutorCard({
                 color: "var(--color-text)",
               }}
             >
-              {tutor.price}
+              {price}
             </span>
             <span
               style={{
@@ -223,7 +230,7 @@ function TutorCard({
               /hr
             </span>
           </div>
-          <Link href={`/tutors/${tutor.id}`} className="btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.78rem" }}>
+          <Link href={`/find-tutors/${tutor.userId?._id || tutor.id}`} className="btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.78rem" }}>
             Book Now
           </Link>
         </div>
@@ -234,9 +241,24 @@ function TutorCard({
 
 /* ─── Main Component ────────────────────────────────────────────── */
 import { useUser } from "@/lib/context/UserContext";
+import { fetchTutorsAction } from "@/lib/actions/tutor-action";
+import { useEffect, useState } from "react";
 
 export default function LandingPage() {
   const { user } = useUser();
+  const [featuredTutors, setFeaturedTutors] = useState<any[]>([]);
+  const [loadingTutors, setLoadingTutors] = useState(true);
+
+  useEffect(() => {
+    async function loadTutors() {
+      const res = await fetchTutorsAction({ limit: 3 });
+      if (res.success && res.data) {
+        setFeaturedTutors(res.data.slice(0, 3));
+      }
+      setLoadingTutors(false);
+    }
+    loadTutors();
+  }, []);
   
   return (
     <main>
@@ -303,17 +325,32 @@ export default function LandingPage() {
               style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "2.5rem" }}
             >
               {user ? (
-                <Link href="/find-tutors" className="btn-primary">
-                  Browse Tutors
-                </Link>
+                <>
+                  {user.role === "student" ? (
+                    <>
+                      <Link href="/find-tutors" className="btn-primary">
+                        Browse Tutors
+                      </Link>
+                      <Link href="/dashboard" className="btn-outline">
+                        Go to Dashboard
+                      </Link>
+                    </>
+                  ) : (
+                    <Link href="/dashboard" className="btn-primary">
+                      Go to Dashboard
+                    </Link>
+                  )}
+                </>
               ) : (
-                <Link href="/signup" className="btn-primary">
-                  Start Learning Today
-                </Link>
+                <>
+                  <Link href="/signup" className="btn-primary">
+                    Start Learning Today
+                  </Link>
+                  <Link href="#how-it-works" className="btn-outline">
+                    How it Works
+                  </Link>
+                </>
               )}
-              <Link href="#how-it-works" className="btn-outline">
-                How it Works
-              </Link>
             </div>
 
             {/* Social proof */}
@@ -626,9 +663,17 @@ export default function LandingPage() {
             }}
             className="tutors-grid"
           >
-            {FEATURED_TUTORS.map((tutor) => (
-              <TutorCard key={tutor.id} tutor={tutor} />
-            ))}
+            {loadingTutors ? (
+              <p style={{ color: "#64748b", textAlign: "center", gridColumn: "1 / -1" }}>Loading amazing tutors...</p>
+            ) : featuredTutors.length > 0 ? (
+              featuredTutors.map((tutor) => (
+                <TutorCard key={tutor.id || tutor._id} tutor={tutor} />
+              ))
+            ) : (
+              <p style={{ color: "#64748b", textAlign: "center", gridColumn: "1 / -1", padding: "2rem", background: "#f8fafc", borderRadius: "12px", border: "1px dashed #cbd5e1" }}>
+                Tutors are currently signing up. Check back soon for featured tutors!
+              </p>
+            )}
           </div>
         </div>
       </section>

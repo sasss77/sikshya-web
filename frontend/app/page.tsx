@@ -1,23 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React from "react";
 import LandingPage from "@/app/_views/LandingPage";
+import { useUser } from "@/lib/context/UserContext";
 
 export default function Home() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check auth status
-    const isLoggedIn = localStorage.getItem("token");
-
-    if (isLoggedIn) {
-      router.replace("/dashboard");
-    } else {
-      setLoading(false);
-    }
-  }, [router]);
+  const { loading } = useUser();
 
   if (loading) {
     return (

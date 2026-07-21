@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/context/UserContext";
 import { ArrowLeft, CheckCircle2, Building, BookOpen, GraduationCap, AlignLeft } from "lucide-react";
+import { verifyStudentAction } from "@/lib/actions/student-action";
 
 export default function VerifyStudentPage() {
   const router = useRouter();
   const { user, setUser, loading } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     institution: "",
@@ -28,22 +30,28 @@ export default function VerifyStudentPage() {
     }
   }, [user, loading, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setServerError(null);
 
-    // Mock an API call to verify the student
-    setTimeout(() => {
-      // Update local context to reflect verified status
-      setUser((prev: any) => {
-        if (!prev) return prev;
-        return { ...prev, isVerifiedStudent: true };
-      });
-      setIsSubmitting(false);
-      
-      window.alert("Student verification successful! You can now book classes.");
+    const result = await verifyStudentAction({
+      institution: formData.institution,
+      gradeLevel: formData.gradeLevel,
+      subjects: formData.subjects,
+      bio: formData.bio,
+    });
+
+    if (result.success) {
+      // Sync the global user context so isVerifiedStudent becomes true everywhere locally
+      setUser((prev: any) => prev ? { ...prev, isVerifiedStudent: true } : null);
+      setSuccess(true);
       router.push("/dashboard/profile");
-    }, 1000);
+    } else {
+      setServerError(result.message || "Verification failed. Please try again.");
+    }
+
+    setIsSubmitting(false);
   };
 
   if (loading || !user) {
@@ -69,6 +77,13 @@ export default function VerifyStudentPage() {
           </div>
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              {/* Server Error */}
+              {serverError && (
+                <div style={{ background: "#FDF2F2", border: "1px solid #F8B4B4", color: "#9B1C1C", padding: "0.75rem 1rem", borderRadius: "8px", fontSize: "0.875rem" }}>
+                  {serverError}
+                </div>
+              )}
+
               {/* Primary Institution */}
               <div>
                 <label style={{ display: "block", fontSize: "0.9rem", fontWeight: 600, color: "#334155", marginBottom: "0.5rem" }}>Primary Institution</label>

@@ -8,6 +8,7 @@ import {
   Plus, X, ChevronLeft, Award, Clock, Globe, MapPin,
   Save
 } from "lucide-react";
+import { fetchMyTutorProfileAction, saveTutorProfileAction } from "@/lib/actions/tutor-action";
 
 const SUBJECTS_LIST = [
   "Physics", "Chemistry", "Biology", "Mathematics", "Statistics",
@@ -75,12 +76,47 @@ export default function TutorProfileSetupPage() {
     setShowCourseForm(false);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => {
-      setSaved(false);
-      router.push("/dashboard");
-    }, 1500);
+  React.useEffect(() => {
+    if (!user || user.role !== "tutor") return;
+    const loadProfile = async () => {
+      const res = await fetchMyTutorProfileAction();
+      if (res.success && res.data) {
+        const p = res.data;
+        setBio(p.bio || "");
+        setInstitution(p.institution || "");
+        setExperience(p.experience || "");
+        setLocation(p.location || "");
+        setLanguages(p.languages?.length ? p.languages : ["Nepali"]);
+        setSubjects(p.subjects || []);
+        setLevels(p.levels || []);
+        setSessionTypes(p.sessionTypes || []);
+        setHourlyRate(p.hourlyRate ? String(p.hourlyRate) : "");
+        setAvailDays(p.availDays || []);
+        setCourses(p.courses?.map((c: any, i: number) => ({ ...c, id: i })) || []);
+      }
+    };
+    loadProfile();
+  }, [user]);
+
+  const handleSave = async () => {
+    const data = {
+      bio, institution, experience, location, languages,
+      subjects, levels, sessionTypes, hourlyRate: Number(hourlyRate) || 0,
+      availDays, courses: courses.map(c => ({
+        title: c.title, level: c.level, price: Number(c.price), modules: c.modules
+      }))
+    };
+    
+    const res = await saveTutorProfileAction(data);
+    if (res.success) {
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        router.push("/dashboard");
+      }, 1500);
+    } else {
+      alert(res.error || "Failed to save profile");
+    }
   };
 
   const inputStyle: React.CSSProperties = {

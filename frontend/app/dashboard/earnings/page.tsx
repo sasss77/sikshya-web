@@ -340,11 +340,13 @@ export default function EarningsPage() {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: "fixed", bottom: "2rem", right: "2rem", zIndex: 1000,
+          position: "fixed", top: "5rem", right: "2rem", zIndex: 1000,
           background: toast.type === "success" ? "#22c55e" : "#ef4444",
-          color: "#fff", padding: "1rem 1.5rem", borderRadius: "12px",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", gap: "0.75rem",
-          fontWeight: 600, fontSize: "0.95rem", animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+          color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          fontWeight: 600, fontSize: "0.95rem",
+          animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
         }}>
           {toast.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
           {toast.message}
@@ -353,8 +355,8 @@ export default function EarningsPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .withdraw-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.35) !important; }
 
         .transaction-row:hover { background: #f8fafc !important; }
@@ -368,3 +370,4 @@ export default function EarningsPage() {
     </div>
   );
 }
+

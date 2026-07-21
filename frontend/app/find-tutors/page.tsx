@@ -13,58 +13,21 @@ import {
   MapPin,
 } from "lucide-react";
 
-/* ─── Mock tutor data (replace with API call) ─────────────────── */
-const ALL_TUTORS = [
-  {
-    id: 1, name: "Anish Shrestha", subjects: ["Physics", "Mathematics"], level: "+2 Science", rating: 5.0, reviews: 42, tags: ["SLC Topper", "IOE Scholar"], price: 800, initials: "AS", avatarColor: "#0B4085", location: "Kathmandu",
-    bio: "IOE entrance ranker tutoring Physics and Mathematics for +2 and entrance prep.",
-    courses: [
-      { id: "c1", title: "Complete Mechanics for +2", modules: ["Kinematics", "Dynamics", "Work, Energy & Power", "Rotational Motion"] },
-      { id: "c2", title: "IOE Math Entrance Prep", modules: ["Calculus", "Algebra", "Co-ordinate Geometry", "Trigonometry"] }
-    ]
-  },
-  {
-    id: 2, name: "Priya Sharma", subjects: ["Biology", "Chemistry"], level: "+2 Science", rating: 4.9, reviews: 38, tags: ["Medical Student", "IOM Ranker"], price: 750, initials: "PS", avatarColor: "#0ea5e9", location: "Lalitpur",
-    bio: "IOM ranker helping students ace Biology and Chemistry for medical entrance.",
-    courses: [
-      { id: "c3", title: "Botany & Zoology Crash Course", modules: ["Cell Biology", "Genetics", "Human Physiology", "Ecology"] },
-      { id: "c4", title: "Organic Chemistry Fundamentals", modules: ["Alkanes & Alkenes", "Alcohols", "Aldehydes & Ketones"] }
-    ]
-  },
-  {
-    id: 3, name: "Sohan Gurung", subjects: ["Economics", "Accounting"], level: "+2 Management", rating: 4.8, reviews: 29, tags: ["CA Aspirant", "Business Pro"], price: 600, initials: "SG", avatarColor: "#7c3aed", location: "Bhaktapur",
-    bio: "CA aspirant teaching Economics and Accounts with focus on board exam strategies.",
-    courses: [
-      { id: "c5", title: "Class 12 Economics Core", modules: ["Microeconomics", "Macroeconomics", "Nepalese Economy"] },
-      { id: "c6", title: "Accounting for Beginners", modules: ["Journal Entries", "Ledger", "Final Accounts"] }
-    ]
-  },
-  { 
-    id: 4, name: "Sita Rai", subjects: ["English", "Nepali"], level: "SEE", rating: 4.7, reviews: 56, tags: ["Literature Graduate", "SEE Expert"], price: 500, initials: "SR", avatarColor: "#ec4899", location: "Kathmandu", 
-    bio: "Literature graduate helping SEE students improve writing and grammar skills.", 
-    courses: [{ id: "c7", title: "SEE English Prep", modules: ["Grammar Rules", "Essay Writing", "Reading Comprehension"] }]
-  },
-  { 
-    id: 5, name: "Bikash Tamang", subjects: ["Computer Science", "Mathematics"], level: "+2 Science", rating: 4.9, reviews: 33, tags: ["Software Engineer", "TU Ranker"], price: 900, initials: "BT", avatarColor: "#10b981", location: "Kathmandu", 
-    bio: "Software engineer teaching CS fundamentals and Mathematics for entrance.", 
-    courses: [{ id: "c8", title: "CS Basics (C Programming)", modules: ["Variables & Loops", "Functions", "Arrays & Pointers", "File Handling"] }]
-  },
-  { 
-    id: 6, name: "Maya Adhikari", subjects: ["Physics", "Chemistry"], level: "+2 Science", rating: 4.6, reviews: 21, tags: ["IOE Student"], price: 700, initials: "MA", avatarColor: "#f59e0b", location: "Pokhara", 
-    bio: "IOE student with strong Physics and Chemistry background ready to tutor.", 
-    courses: [{ id: "c9", title: "Physics Crash Course", modules: ["Optics", "Modern Physics", "Electricity & Magnetism"] }]
-  },
-  { 
-    id: 7, name: "Roshan KC", subjects: ["Mathematics", "Statistics"], level: "+2 Management", rating: 4.8, reviews: 44, tags: ["MBS Student", "TU Ranker"], price: 650, initials: "RK", avatarColor: "#ef4444", location: "Lalitpur", 
-    bio: "MBS student specializing in Statistics and Business Mathematics.", 
-    courses: [{ id: "c10", title: "Business Math & Stats", modules: ["Probability", "Linear Programming", "Matrices"] }]
-  },
-  { 
-    id: 8, name: "Anjali Poudel", subjects: ["Biology", "English"], level: "SEE", rating: 4.7, reviews: 18, tags: ["Nursing Graduate"], price: 450, initials: "AP", avatarColor: "#6366f1", location: "Bhaktapur", 
-    bio: "Nursing graduate helping SEE students with Science and English fundamentals.", 
-    courses: [{ id: "c11", title: "SEE Science Mastery", modules: ["Human Body", "Environment", "Force & Motion"] }]
-  },
-];
+import { fetchTutorsAction } from "@/lib/actions/tutor-action";
+
+// Helper to get initials and color from name
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+};
+
+const getAvatarColor = (name: string) => {
+  const colors = ["#0B4085", "#0ea5e9", "#7c3aed", "#ec4899", "#f59e0b", "#22c55e"];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
 
 const SUBJECTS = [
   "All Subjects",
@@ -90,7 +53,7 @@ const SORT_OPTIONS = [
 ];
 
 /* ─── Tutor Card ──────────────────────────────────────────────── */
-function TutorCard({ tutor }: { tutor: (typeof ALL_TUTORS)[0] }) {
+function TutorCard({ tutor }: { tutor: any }) {
   return (
     <div className="card" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {/* Top colored band */}
@@ -162,7 +125,7 @@ function TutorCard({ tutor }: { tutor: (typeof ALL_TUTORS)[0] }) {
 
         {/* Subjects */}
         <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
-          {tutor.subjects.map((s) => (
+          {tutor.subjects.map((s: any) => (
             <span
               key={s}
               style={{
@@ -185,7 +148,7 @@ function TutorCard({ tutor }: { tutor: (typeof ALL_TUTORS)[0] }) {
 
         {/* Tags */}
         <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-          {tutor.tags.map((tag) => (
+          {tutor.tags.map((tag: any) => (
             <span
               key={tag}
               style={{
@@ -209,10 +172,10 @@ function TutorCard({ tutor }: { tutor: (typeof ALL_TUTORS)[0] }) {
             <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.1rem" }}>
               <Star size={13} fill="#f59e0b" stroke="none" />
               <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--color-text)" }}>
-                {tutor.rating.toFixed(1)}
+                {tutor.rating ? tutor.rating.toFixed(1) : "N/A"}
               </span>
               <span style={{ fontSize: "0.75rem", color: "var(--color-text-light)" }}>
-                ({tutor.reviews} reviews)
+                ({tutor.reviews || 0} reviews)
               </span>
             </div>
             <div>
@@ -238,14 +201,39 @@ export default function FindTutorsPage() {
   const [sortBy, setSortBy] = useState("rating");
   const [maxPrice, setMaxPrice] = useState(1000);
   const [showFilters, setShowFilters] = useState(false);
+  const [allTutors, setAllTutors] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const loadTutors = async () => {
+      const res = await fetchTutorsAction();
+      if (res.success) {
+        setAllTutors(res.data.map((t: any) => ({
+          id: t.userId, // use userId so we can link to profile
+          name: t.name,
+          subjects: t.subjects || [],
+          level: (t.levels && t.levels.length > 0) ? t.levels[0] : "All Levels", // map first level
+          rating: 0, // not in schema yet
+          reviews: 0,
+          tags: [], // not in schema yet
+          price: t.hourlyRate || 500,
+          initials: getInitials(t.name),
+          avatarColor: getAvatarColor(t.name),
+          location: t.location || "Kathmandu",
+          bio: t.bio || "",
+          courses: t.courses || []
+        })));
+      }
+    };
+    loadTutors();
+  }, []);
 
   const filtered = useMemo(() => {
-    let result = ALL_TUTORS.filter((t) => {
+    let result = allTutors.filter((t) => {
       const matchSearch =
         !search ||
         t.name.toLowerCase().includes(search.toLowerCase()) ||
-        t.subjects.some((s) => s.toLowerCase().includes(search.toLowerCase())) ||
-        t.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
+        t.subjects.some((s: any) => s.toLowerCase().includes(search.toLowerCase())) ||
+        t.tags.some((tag: any) => tag.toLowerCase().includes(search.toLowerCase()));
       const matchSubject = subject === "All Subjects" || t.subjects.includes(subject);
       const matchLevel = level === "All Levels" || t.level === level;
       const matchLocation = location === "All Locations" || t.location === location;
@@ -262,7 +250,7 @@ export default function FindTutorsPage() {
     });
 
     return result;
-  }, [search, subject, level, location, sortBy, maxPrice]);
+  }, [allTutors, search, subject, level, location, sortBy, maxPrice]);
 
   const clearFilters = () => {
     setSearch("");
@@ -299,7 +287,7 @@ export default function FindTutorsPage() {
             Find Your Perfect Tutor
           </h1>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.95rem", marginBottom: "1.5rem" }}>
-            Browse {ALL_TUTORS.length} verified peer tutors across Nepal
+            Browse {allTutors.length} verified peer tutors across Nepal
           </p>
 
           {/* Search bar */}

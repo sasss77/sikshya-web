@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { GraduationCap, Users, Target, Heart, Mail, Github } from "lucide-react";
+import { GraduationCap, Users, Target, Heart } from "lucide-react";
 
 export const metadata = {
   title: "About Us | Sikshya",

@@ -36,106 +36,23 @@ export interface Course {
   topics: { label: string; done: boolean }[];
 }
 
-/* ─── Dummy Data ─────────────────────────────────────── */
-export const LEARNINGS: Course[] = [
-  {
-    id: 1,
-    subject: "Engineering Physics",
-    tutorName: "Anish Shrestha",
-    tutorInitials: "AS",
-    tutorColor: "#0B4085",
-    progress: 60,
-    totalSessions: 10,
-    completedSessions: 6,
-    nextSession: "Jul 18, 10:00 AM",
-    status: "in_progress",
-    topics: [
-      { label: "Kinematics", done: true },
-      { label: "Newton's Laws", done: true },
-      { label: "Work & Energy", done: true },
-      { label: "Thermodynamics", done: false },
-      { label: "Electrostatics", done: false },
-    ],
-  },
-  {
-    id: 2,
-    subject: "Biology",
-    tutorName: "Priya Sharma",
-    tutorInitials: "PS",
-    tutorColor: "#0ea5e9",
-    progress: 30,
-    totalSessions: 8,
-    completedSessions: 2,
-    nextSession: "Jul 20, 2:00 PM",
-    status: "in_progress",
-    topics: [
-      { label: "Cell Biology", done: true },
-      { label: "Genetics", done: false },
-      { label: "Ecology", done: false },
-      { label: "Human Physiology", done: false },
-    ],
-  },
-  {
-    id: 3,
-    subject: "Economics",
-    tutorName: "Sohan Gurung",
-    tutorInitials: "SG",
-    tutorColor: "#7c3aed",
-    progress: 100,
-    totalSessions: 6,
-    completedSessions: 6,
-    nextSession: null,
-    status: "completed",
-    rating: 5,
-    topics: [
-      { label: "Demand & Supply", done: true },
-      { label: "Market Structures", done: true },
-      { label: "Macroeconomics", done: true },
-    ],
-  },
-];
+import { fetchLearningsAction } from "@/lib/actions/enrollment-action";
 
-/* ─── Global Course Catalog ──────────────────────────── */
-export const CATALOG_COURSES = [
-  { id: "c1", title: "Complete Mechanics for +2", tutorName: "Anish Shrestha", tutorId: 1, color: "#0B4085", modules: 4, level: "+2 Science", price: 800 },
-  { id: "c2", title: "IOE Math Entrance Prep", tutorName: "Anish Shrestha", tutorId: 1, color: "#0B4085", modules: 4, level: "Entrance", price: 800 },
-  { id: "c3", title: "Botany & Zoology Crash Course", tutorName: "Priya Sharma", tutorId: 2, color: "#0ea5e9", modules: 4, level: "+2 Science", price: 750 },
-  { id: "c4", title: "Organic Chemistry Fundamentals", tutorName: "Priya Sharma", tutorId: 2, color: "#0ea5e9", modules: 3, level: "+2 Science", price: 750 },
-  { id: "c5", title: "Class 12 Economics Core", tutorName: "Sohan Gurung", tutorId: 3, color: "#7c3aed", modules: 3, level: "+2 Management", price: 600 },
-  { id: "c6", title: "Accounting for Beginners", tutorName: "Sohan Gurung", tutorId: 3, color: "#7c3aed", modules: 3, level: "+2 Management", price: 600 },
-];
+// Helper to get initials and color from name
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+};
 
-/* ─── Catalog Course Card ────────────────────────────── */
-function CatalogCourseCard({ course }: { course: typeof CATALOG_COURSES[0] }) {
-  const router = useRouter();
-  return (
-    <div style={{
-      background: "#fff", borderRadius: "16px", border: "1px solid #e2e8f0", padding: "1.5rem",
-      display: "flex", gap: "1.5rem", alignItems: "flex-start", cursor: "pointer",
-      boxShadow: "0 2px 12px rgba(11,64,133,0.04)", transition: "box-shadow 0.2s ease, transform 0.2s ease",
-    }} className="course-card" onClick={() => router.push(`/dashboard/learnings/${course.id}`)}>
-      <div style={{ width: "50px", height: "50px", borderRadius: "12px", background: course.color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <BookOpen size={24} color={course.color} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1a202c", margin: "0 0 0.25rem" }}>{course.title}</h3>
-        <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "0 0 0.75rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          <span>By <strong>{course.tutorName}</strong></span> • <span>{course.modules} Modules</span> • <span>{course.level}</span>
-        </p>
-        <button
-          onClick={(e) => { e.stopPropagation(); router.push(`/tutors/${course.tutorId}`); }}
-          style={{
-            background: "linear-gradient(135deg, #0B4085, #1a56b3)", color: "#fff",
-            border: "none", borderRadius: "8px", padding: "0.5rem 1rem", fontSize: "0.825rem", fontWeight: 700, cursor: "pointer",
-            display: "inline-flex", alignItems: "center", gap: "0.4rem"
-          }}
-        >
-          Book Tutor — Rs. {course.price} <ChevronRight size={14} />
-        </button>
-      </div>
-    </div>
-  );
-}
+const getAvatarColor = (name: string) => {
+  const colors = ["#0B4085", "#0ea5e9", "#7c3aed", "#ec4899", "#f59e0b", "#22c55e"];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
+
 
 /* ─── Progress Bar ───────────────────────────────────── */
 function ProgressBar({ value, color = "#0B4085" }: { value: number; color?: string }) {
@@ -302,10 +219,35 @@ function StatCard({ icon: Icon, value, label, color, bg }: { icon: React.Element
 export default function LearningsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"catalog" | CourseStatus>("catalog");
+  const [activeTab, setActiveTab] = useState<CourseStatus>("not_started");
+  const [learnings, setLearnings] = useState<Course[]>([]);
+  const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
+
+  const loadLearnings = async () => {
+    const res = await fetchLearningsAction();
+    if (res.success) {
+      setLearnings(res.data.map((l: any) => ({
+        id: l.id,
+        subject: l.subject || l.courseName || "Course",
+        tutorName: l.tutorName,
+        tutorInitials: getInitials(l.tutorName),
+        tutorColor: getAvatarColor(l.tutorName),
+        progress: l.progress,
+        totalSessions: l.totalSessions,
+        completedSessions: l.completedSessions,
+        nextSession: l.nextSession || null,
+        status: l.status || "not_started",
+        topics: l.topics,
+      })));
+    } else {
+      setToast({ message: res.error || "Failed to load learnings", type: "error" });
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login");
+    else if (user && user.role === "student") loadLearnings();
   }, [user, loading, router]);
 
   if (loading || !user) {
@@ -337,13 +279,14 @@ export default function LearningsPage() {
     );
   }
 
-  const inProgress = LEARNINGS.filter(c => c.status === "in_progress");
-  const completed = LEARNINGS.filter(c => c.status === "completed");
-  const totalSessionsDone = LEARNINGS.reduce((sum, c) => sum + c.completedSessions, 0);
-  const avgProgress = Math.round(LEARNINGS.reduce((sum, c) => sum + c.progress, 0) / LEARNINGS.length);
+  const notStarted = learnings.filter(c => c.status === "not_started");
+  const inProgress = learnings.filter(c => c.status === "in_progress");
+  const completed = learnings.filter(c => c.status === "completed");
+  const totalSessionsDone = learnings.reduce((sum, c) => sum + c.completedSessions, 0);
+  const avgProgress = learnings.length > 0 ? Math.round(learnings.reduce((sum, c) => sum + c.progress, 0) / learnings.length) : 0;
 
   const TABS = [
-    { key: "catalog" as const, label: `All Courses (${CATALOG_COURSES.length})` },
+    { key: "not_started" as const, label: `Not Started (${notStarted.length})` },
     { key: "in_progress" as const, label: `In Progress (${inProgress.length})` },
     { key: "completed" as const, label: `Completed (${completed.length})` },
   ];
@@ -369,7 +312,7 @@ export default function LearningsPage() {
 
         {/* Stats Grid */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-          <StatCard icon={BookOpen} value={LEARNINGS.length} label="Enrolled Subjects" color="#0B4085" bg="#e8eef7" />
+          <StatCard icon={BookOpen} value={learnings.length} label="Enrolled Subjects" color="#0B4085" bg="#e8eef7" />
           <StatCard icon={CheckCircle2} value={completed.length} label="Completed" color="#16a34a" bg="#dcfce7" />
           <StatCard icon={TrendingUp} value={totalSessionsDone} label="Sessions Done" color="#8b5cf6" bg="#f3e8ff" />
           <StatCard icon={BarChart2} value={`${avgProgress}%`} label="Avg. Progress" color="#f59e0b" bg="#fef3c7" />
@@ -420,8 +363,12 @@ export default function LearningsPage() {
 
         {/* Content Area */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          {activeTab === "catalog" && (
-            CATALOG_COURSES.map(course => <CatalogCourseCard key={course.id} course={course} />)
+          {activeTab === "not_started" && (
+            notStarted.length === 0 ? (
+              <EmptyState message="No courses added yet. Browse tutors and add courses to your learnings!" />
+            ) : (
+              notStarted.map(course => <CourseCard key={course.id} course={course} />)
+            )
           )}
 
           {activeTab === "in_progress" && (
@@ -443,8 +390,27 @@ export default function LearningsPage() {
 
       </div>
 
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: "5rem", right: "2rem", zIndex: 1000,
+          background: toast.type === "success" ? "#22c55e" : "#ef4444",
+          color: "#fff", padding: "1rem 1.5rem", borderRadius: "10px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          fontWeight: 600, fontSize: "0.95rem",
+          animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+        }}>
+          {toast.message}
+        </div>
+      )}
+
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
         .course-card:hover {
           box-shadow: 0 8px 28px rgba(11,64,133,0.1) !important;
           transform: translateY(-2px);
@@ -463,4 +429,5 @@ function EmptyState({ message }: { message: string }) {
     </div>
   );
 }
+
 
