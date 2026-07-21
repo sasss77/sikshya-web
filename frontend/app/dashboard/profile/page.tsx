@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
 import { getTokenAction } from "@/lib/actions/user-actions";
 import { logoutAction } from "@/lib/actions/auth-action";
+import { fetchStudentProfileAction, fetchStudentDashboardAction } from "@/lib/actions/student-action";
 import axios from "axios";
 
 // ─── Component Styles ───
@@ -614,17 +615,28 @@ export default function ProfilePage() {
     const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState<boolean>(false);
 
+    // Student academic profile from backend
+    const [studentProfile, setStudentProfile] = useState<{
+        institution: string;
+        gradeLevel: string;
+        subjects: string[];
+        bio: string;
+        verifiedAt: string | null;
+    } | null>(null);
+
+    // Dashboard stats from backend
+    const [dashboardStats, setDashboardStats] = useState<{
+        activeCourses: number;
+        hoursLearned: number;
+        upcomingSessions: number;
+    }>({ activeCourses: 0, hoursLearned: 0, upcomingSessions: 0 });
+
     // Local profile data (populated from context)
     const [profileData, setProfileData] = useState({
         fullName: "",
         email: "",
         phone: "",
         role: "",
-        location: "Kathmandu, Nepal",
-        institution: "Tribhuvan University, Kathmandu",
-        memberSince: "Jan 2024",
-        activeCourses: 4,
-        studyHours: 28,
         profileImage: "",
     });
 
@@ -665,6 +677,29 @@ export default function ProfilePage() {
                 phone: user.phoneNumber || "",
             });
         }
+    }, [user]);
+
+    // Fetch student academic profile + dashboard stats from backend
+    useEffect(() => {
+        if (!user || user.role !== "student" || !user.isVerifiedStudent) return;
+        const load = async () => {
+            const [profileRes, dashboardRes] = await Promise.all([
+                fetchStudentProfileAction(),
+                fetchStudentDashboardAction(),
+            ]);
+            if (profileRes.success && profileRes.data) {
+                setStudentProfile(profileRes.data);
+            }
+            if (dashboardRes.success && dashboardRes.data?.stats) {
+                const stats = dashboardRes.data.stats;
+                setDashboardStats({
+                    activeCourses: stats.activeCourses ?? 0,
+                    hoursLearned: Math.round(stats.hoursLearned ?? 0),
+                    upcomingSessions: stats.upcomingSessions ?? 0,
+                });
+            }
+        };
+        load();
     }, [user]);
 
     const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
@@ -831,16 +866,28 @@ export default function ProfilePage() {
                                         {profileData.fullName}
                                         <span style={S.roleBadge}>{profileData.role || "Student"}</span>
                                     </h2>
-                                    <div style={S.locationText}>
-                                        <IconPin /> {profileData.location}
-                                    </div>
+                                    {studentProfile?.gradeLevel && (
+                                        <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "4px" }}>
+                                            {studentProfile.gradeLevel}
+                                        </div>
+                                    )}
+                                    {studentProfile?.subjects && studentProfile.subjects.length > 0 && (
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "6px" }}>
+                                            {studentProfile.subjects.slice(0, 3).map((s) => (
+                                                <span key={s} style={{ background: "#eff6ff", color: "#1e40af", fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px" }}>{s}</span>
+                                            ))}
+                                            {studentProfile.subjects.length > 3 && (
+                                                <span style={{ background: "#f1f5f9", color: "#64748b", fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px" }}>+{studentProfile.subjects.length - 3} more</span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Active Courses Summary Counter */}
                             <div style={{ ...S.cardBase, ...S.statCard, background: "#1e3a8a" }}>
                                 <span style={{ ...S.statCount, color: "#fff" }}>
-                                    {profileData.activeCourses < 10 ? `0${profileData.activeCourses}` : profileData.activeCourses}
+                                    {dashboardStats.activeCourses < 10 ? `0${dashboardStats.activeCourses}` : dashboardStats.activeCourses}
                                 </span>
                                 <span style={{ ...S.statLabel, color: "#93c5fd" }}>Active Courses</span>
                             </div>
@@ -859,11 +906,11 @@ export default function ProfilePage() {
                                 </div>
                                 <div style={S.infoField}>
                                     <span style={S.fieldLabel}>Phone Number</span>
-                                    <span style={S.fieldValue}>{profileData.phone}</span>
+                                    <span style={S.fieldValue}>{profileData.phone || "—"}</span>
                                 </div>
                                 <div style={S.infoField}>
-                                    <span style={S.fieldLabel}>Institutional Role</span>
-                                    <span style={S.fieldValue}>{profileData.role}</span>
+                                    <span style={S.fieldLabel}>Grade Level</span>
+                                    <span style={S.fieldValue}>{studentProfile?.gradeLevel || profileData.role || "—"}</span>
                                 </div>
                             </div>
 
@@ -871,11 +918,11 @@ export default function ProfilePage() {
                                 <div style={S.infoField}>
                                     <span style={S.fieldLabel}>Primary Institution</span>
                                     <span style={{ ...S.fieldValue, color: "#334155" }}>
-                                        <IconBuilding /> {profileData.institution}
+                                        <IconBuilding /> {studentProfile?.institution || "—"}
                                     </span>
                                 </div>
                                 <div style={S.memberSince}>
-                                    <span>Member since {profileData.memberSince}</span>
+                                    <span>Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"}</span>
                                     <div style={S.greenDot}></div>
                                 </div>
                             </div>
@@ -889,8 +936,8 @@ export default function ProfilePage() {
                                         <IconClock />
                                     </div>
                                     <div>
-                                        <h4 style={S.barSubtitle}>{profileData.studyHours}h</h4>
-                                        <p style={S.barTitle}>Study Hours This Month</p>
+                                        <h4 style={S.barSubtitle}>{dashboardStats.hoursLearned}h</h4>
+                                        <p style={S.barTitle}>Total Hours Learned</p>
                                     </div>
                                 </div>
                             </div>
@@ -903,30 +950,25 @@ export default function ProfilePage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <p style={S.barTitle}>Upcoming Lesson</p>
-                                        <h4 style={S.barSubtitle}>Advanced Calculus with Dr. Sharma</h4>
+                                        <p style={S.barTitle}>Upcoming Sessions</p>
+                                        <h4 style={S.barSubtitle}>{dashboardStats.upcomingSessions} session{dashboardStats.upcomingSessions !== 1 ? "s" : ""} scheduled</h4>
                                     </div>
                                 </div>
                                 <IconArrowRight />
                             </div>
                         </div>
 
-                        <div style={{ ...S.bottomGrid, marginTop: "24px" }}>
-                            <div style={{ ...S.cardBase, ...S.interactiveBar, gridColumn: "span 2" }}>
-                                <div style={S.barLeft}>
-                                    <div style={{ ...S.iconBox, background: "#fef3c7" }}>
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                        </svg>
+                        {studentProfile?.bio && (
+                            <div style={{ ...S.bottomGrid, marginTop: "24px" }}>
+                                <div style={{ ...S.cardBase, gridColumn: "span 2" }}>
+                                    <div style={{ ...S.accountInfoTitle, marginBottom: "12px" }}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        About Me
                                     </div>
-                                    <div>
-                                        <p style={S.barTitle}>Latest Achievement</p>
-                                        <h4 style={S.barSubtitle}>Quick Learner - 10 Hours Completed</h4>
-                                    </div>
+                                    <p style={{ fontSize: "14px", color: "#475569", lineHeight: "1.6", margin: 0 }}>{studentProfile.bio}</p>
                                 </div>
-                                <IconArrowRight />
                             </div>
-                        </div>
+                        )}
                     </>
                 ) : (
                     /* ─── EDIT PROFILE SCREEN ─── */
