@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 
 import { fetchTutorByIdAction } from "@/lib/actions/tutor-action";
-import { createBookingAction } from "@/lib/actions/booking-action";
+import { createBookingAction, enrollInCourseAction } from "@/lib/actions/booking-action";
+import { useUser } from "@/lib/context/UserContext";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -53,9 +54,12 @@ function StarRow({ rating }: { rating: number }) {
 export default function TutorProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useUser();
   const id = String(params.id);
   const [tutor, setTutor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
 
   React.useEffect(() => {
     const loadTutor = async () => {
@@ -98,11 +102,18 @@ export default function TutorProfilePage() {
   const [payStep, setPayStep] = useState<"form" | "processing" | "success">("form");
   const [card, setCard] = useState({ name: "", number: "", expiry: "", cvc: "" });
 
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
 
   const handleBookSession = () => {
     if (!selectedDay || !selectedTime) {
-      alert("Please select a day and time slot first.");
+      showToast("Please select a day and time slot first.", "error");
       return;
     }
     setPayStep("form");
@@ -127,7 +138,7 @@ export default function TutorProfilePage() {
     if (res.success) {
       setPayStep("success");
     } else {
-      alert(res.error || "Failed to book session");
+      showToast(res.error || "Failed to book session", "error");
       setShowPayment(false);
     }
   };
@@ -327,23 +338,69 @@ export default function TutorProfilePage() {
             {tutor.courses && tutor.courses.length > 0 && (
               <div className="card" style={{ padding: "1.75rem" }}>
                 <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <BookOpen size={16} color="var(--color-primary)" /> Syllabus & Modules
+                  <BookOpen size={16} color="var(--color-primary)" /> Syllabus &amp; Modules
                 </h2>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                  {tutor.courses.map((course: any) => (
-                    <div key={course.id} style={{ padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)", background: "var(--color-bg-secondary)" }}>
-                      <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-text)", margin: "0 0 0.5rem" }}>
-                        {course.title}
-                      </h3>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                        {course.modules.map((mod: string, i: number) => (
-                          <span key={i} style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "var(--radius-sm)", background: "#fff", border: "1px solid #cbd5e1", color: "var(--color-text-muted)" }}>
-                            {i + 1}. {mod}
-                          </span>
-                        ))}
+                  {tutor.courses.map((course: any) => {
+                    const isEnrolled = enrolledIds.has(course._id || course.id);
+                    const isEnrolling = enrollingId === (course._id || course.id);
+                    return (
+                      <div key={course._id || course.id} style={{ padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)", background: "var(--color-bg-secondary)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
+                          <div>
+                            <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-text)", margin: "0 0 0.15rem" }}>
+                              {course.title}
+                            </h3>
+                            {course.level && <span style={{ fontSize: "0.75rem", color: "#64748b" }}>{course.level}</span>}
+                            {course.price && <span style={{ fontSize: "0.75rem", color: "#64748b", marginLeft: "0.75rem" }}>NPR {course.price}</span>}
+                          </div>
+                          {user && user.role === "student" && (
+                            <button
+                              disabled={isEnrolled || isEnrolling}
+                              onClick={async () => {
+                                const cId = course._id || course.id;
+                                if (!cId) { showToast("Course ID not available", "error"); return; }
+                                setEnrollingId(cId);
+                                const res = await enrollInCourseAction(id, cId);
+                                setEnrollingId(null);
+                                if (res.success) {
+                                  setEnrolledIds(prev => new Set([...prev, cId]));
+                                  showToast("Course added to your learnings! 🎉");
+                                } else {
+                                  showToast(res.error || "Failed to add course", "error");
+                                }
+                              }}
+                              style={{
+                                padding: "0.4rem 0.9rem",
+                                borderRadius: "8px",
+                                border: "none",
+                                background: isEnrolled ? "#bbf7d0" : "linear-gradient(135deg, #0B4085, #1a56b3)",
+                                color: isEnrolled ? "#16a34a" : "#fff",
+                                fontWeight: 700,
+                                fontSize: "0.8rem",
+                                cursor: (isEnrolled || isEnrolling) ? "not-allowed" : "pointer",
+                                whiteSpace: "nowrap",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.4rem",
+                                flexShrink: 0,
+                                transition: "all 0.2s",
+                              }}
+                            >
+                              {isEnrolling ? "Adding..." : isEnrolled ? "✓ Added" : "+ Add to Learnings"}
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                          {course.modules.map((mod: any, i: number) => (
+                            <span key={i} style={{ fontSize: "0.75rem", padding: "0.2rem 0.5rem", borderRadius: "var(--radius-sm)", background: "#fff", border: "1px solid #cbd5e1", color: "var(--color-text-muted)" }}>
+                              {i + 1}. {mod.title || mod}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -632,9 +689,25 @@ export default function TutorProfilePage() {
         </div>
       )}
 
+      {/* Toast Notification */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: "2rem", right: "2rem", zIndex: 9999,
+          background: toast.type === "success" ? "#22c55e" : "#ef4444",
+          color: "#fff", padding: "1rem 1.5rem", borderRadius: "12px",
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          fontWeight: 600, fontSize: "0.95rem",
+          animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+        }}>
+          {toast.message}
+        </div>
+      )}
+
       <style>{`
         .back-link:hover { color: var(--color-primary) !important; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @media (max-width: 900px) {
           .profile-grid { grid-template-columns: 1fr !important; }
         }
