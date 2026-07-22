@@ -221,7 +221,7 @@ export default function LearningsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<CourseStatus>("not_started");
   const [learnings, setLearnings] = useState<Course[]>([]);
-  const [toast, setToast] = useState<{ message: string; type: "error" } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
   const loadLearnings = async () => {
     const res = await fetchLearningsAction();

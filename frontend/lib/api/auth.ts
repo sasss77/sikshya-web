@@ -4,7 +4,7 @@ import { ENDPOINTS } from "./endpoints";
 export interface RegisterPayload {
   fullName: string;
   email: string;
-  role: "student" | "tutor";
+  role: "student" | "tutor" | "admin";
   password: string;
   phoneNumber?: string;
 }

@@ -4,6 +4,8 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/context/UserContext";
+import { logoutAction } from "@/lib/actions/auth-action";
+import { GraduationCap, Presentation, BookOpen } from "lucide-react";
 
 const S: Record<string, React.CSSProperties> = {
   root: {
@@ -107,6 +109,15 @@ const S: Record<string, React.CSSProperties> = {
   },
 };
 
+const IconDashboard = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="9"></rect>
+    <rect x="14" y="3" width="7" height="5"></rect>
+    <rect x="14" y="12" width="7" height="9"></rect>
+    <rect x="3" y="16" width="7" height="5"></rect>
+  </svg>
+);
+
 const IconUsers = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -116,9 +127,25 @@ const IconUsers = () => (
   </svg>
 );
 
+const IconBell = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+  </svg>
+);
+
+import { usePathname } from "next/navigation";
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useUser();
+  const { user, loading, refreshUser } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await logoutAction();
+    await refreshUser();
+    router.push("/login");
+  };
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
@@ -147,16 +174,71 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div style={S.root}>
       {/* Sidebar */}
       <aside style={S.sidebar}>
-        <Link href="/admin/users" style={S.logoContainer}>
+        <Link href="/admin" style={S.logoContainer}>
           Sikshya Admin
         </Link>
         <nav style={S.nav}>
-          <Link href="/admin/users" style={{ ...S.navItem, ...S.navItemActive }}>
+          <Link href="/admin" style={{ ...S.navItem, ...(pathname === "/admin" ? S.navItemActive : {}) }}>
+            <IconDashboard />
+            Dashboard
+          </Link>
+          <Link href="/admin/users" style={{ ...S.navItem, ...(pathname?.includes("/admin/users") ? S.navItemActive : {}) }}>
             <IconUsers />
             User Management
           </Link>
-          {/* Add more nav items here in the future */}
+          <Link href="/admin/students" style={{ ...S.navItem, ...(pathname?.includes("/admin/students") ? S.navItemActive : {}) }}>
+            <GraduationCap size={20} />
+            Students
+          </Link>
+          <Link href="/admin/tutors" style={{ ...S.navItem, ...(pathname?.includes("/admin/tutors") ? S.navItemActive : {}) }}>
+            <Presentation size={20} />
+            Tutors
+          </Link>
+          <Link href="/admin/courses" style={{ ...S.navItem, ...(pathname?.includes("/admin/courses") ? S.navItemActive : {}) }}>
+            <BookOpen size={20} />
+            Courses
+          </Link>
+          <Link href="/admin/requests" style={{ ...S.navItem, ...(pathname?.includes("/admin/requests") ? S.navItemActive : {}) }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <polyline points="17 11 19 13 23 9"></polyline>
+            </svg>
+            Requests
+          </Link>
+          <Link href="/admin/notifications" style={{ ...S.navItem, ...(pathname?.includes("/admin/notifications") ? S.navItemActive : {}) }}>
+            <IconBell />
+            Notices
+          </Link>
         </nav>
+
+        {/* Logout Section */}
+        <div style={{ padding: "24px", borderTop: "1px solid #334155" }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              ...S.navItem,
+              width: "100%",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "#ef4444",
+              display: "flex",
+              justifyContent: "flex-start",
+              padding: "12px 16px",
+              marginTop: "auto"
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}

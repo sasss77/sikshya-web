@@ -15,9 +15,10 @@ export function proxy(request: NextRequest) {
   }
 
   // Prevent logged-in users from accessing /login and /signup pages
+  // Redirect to root — root page (app/page.tsx) handles role-based routing (admin → /admin, others → /dashboard)
   if (pathname === "/login" || pathname === "/signup") {
     if (token) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 

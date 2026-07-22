@@ -21,7 +21,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import { fetchTutorByIdAction } from "@/lib/actions/tutor-action";
+import { fetchTutorByIdAction, fetchTutorBookedSlotsAction } from "@/lib/actions/tutor-action";
 import { createBookingAction, enrollInCourseAction } from "@/lib/actions/booking-action";
 import { useUser } from "@/lib/context/UserContext";
 
@@ -60,6 +60,7 @@ export default function TutorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
+  const [bookedSlots, setBookedSlots] = useState<{ day: string; time: string }[]>([]);
 
   React.useEffect(() => {
     const loadTutor = async () => {
@@ -89,6 +90,12 @@ export default function TutorProfilePage() {
           reviews_data: []
         });
       }
+      
+      const slotsRes = await fetchTutorBookedSlotsAction(id);
+      if (slotsRes.success && slotsRes.data) {
+        setBookedSlots(slotsRes.data);
+      }
+      
       setLoading(false);
     };
     loadTutor();
@@ -109,7 +116,15 @@ export default function TutorProfilePage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
+  const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
+  
+  const getAvailableTimeSlots = () => {
+    if (!selectedDay) return ALL_TIME_SLOTS;
+    const bookedTimesForDay = bookedSlots.filter(s => s.day === selectedDay).map(s => s.time);
+    return ALL_TIME_SLOTS.filter(slot => !bookedTimesForDay.includes(slot));
+  };
+  
+  const TIME_SLOTS = getAvailableTimeSlots();
 
   const handleBookSession = () => {
     if (!selectedDay || !selectedTime) {
@@ -473,7 +488,16 @@ export default function TutorProfilePage() {
                   {tutor.availability && Array.isArray(tutor.availability) && tutor.availability.map((day: string) => (
                     <button
                       key={day}
-                      onClick={() => setSelectedDay(day === selectedDay ? null : day)}
+                      onClick={() => {
+                        const newDay = day === selectedDay ? null : day;
+                        setSelectedDay(newDay);
+                        if (newDay && selectedTime) {
+                          const bookedTimesForNewDay = bookedSlots.filter(s => s.day === newDay).map(s => s.time);
+                          if (bookedTimesForNewDay.includes(selectedTime)) {
+                            setSelectedTime(null);
+                          }
+                        }
+                      }}
                       style={{
                         padding: "0.4rem 0.7rem",
                         borderRadius: "var(--radius-sm)",

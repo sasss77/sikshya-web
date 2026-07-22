@@ -28,3 +28,10 @@ export const saveTutorProfile = async (token: string, data: any) => {
   });
   return response.data;
 };
+
+export const getTutorBookedSlotsApi = async (token: string | null, id: string) => {
+  const url = ENDPOINTS.TUTOR_BOOKED_SLOTS.replace(":id", id);
+  const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  const response = await axiosInstance.get(url, config);
+  return response.data;
+};

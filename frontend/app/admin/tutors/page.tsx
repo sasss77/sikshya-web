@@ -6,13 +6,14 @@ import {
   createAdminUserAction,
   updateAdminUserAction,
   deleteAdminUserAction,
+  getAdminUserByIdAction,
 } from "@/lib/actions/admin-actions";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Search, Plus, Edit2, Trash2, X, ChevronLeft, ChevronRight, AlertCircle, Loader2, Eye, EyeOff, LogOut } from "lucide-react";
-import { logoutAction } from "@/lib/actions/auth-action";
+import { Search, Plus, Edit2, Trash2, X, ChevronLeft, ChevronRight, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import { useUser } from "@/lib/context/UserContext";
+import { Star } from "lucide-react";
 
 // --- Types ---
 type User = {
@@ -316,7 +317,7 @@ const S: Record<string, React.CSSProperties> = {
   },
 };
 
-export default function AdminUsersPage() {
+export default function AdminTutorsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -327,18 +328,15 @@ export default function AdminUsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [viewingUserDetails, setViewingUserDetails] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [rating, setRating] = useState<number>(0);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Password visibility state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logoutAction();
-    window.location.href = "/login";
-  };
 
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
@@ -348,7 +346,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = useCallback(async (p: number, search: string) => {
     setLoading(true);
-    const res = await getAdminUsersAction({ page: p, limit: 10, search });
+    const res = await getAdminUsersAction({ page: p, limit: 10, search, role: "tutor" });
     if (res.success && res.data) {
       setUsers(res.data);
       setMeta(res.meta ?? null);
@@ -370,6 +368,19 @@ export default function AdminUsersPage() {
       setPage(1);
       fetchUsers(1, val);
     }, 500);
+  };
+
+  const handleOpenViewModal = async (id: string) => {
+    setLoading(true);
+    const res = await getAdminUserByIdAction(id);
+    if (res.success && res.data) {
+      setViewingUserDetails(res.data);
+      setRating(res.data.details?.profile?.averageRating || 0);
+      setIsViewModalOpen(true);
+    } else {
+      alert(res.message || "Failed to load user details");
+    }
+    setLoading(false);
   };
 
   const handleOpenModal = (user?: User) => {
@@ -454,7 +465,7 @@ export default function AdminUsersPage() {
   return (
     <div style={S.container}>
       <div style={S.header}>
-        <h1 style={S.title}>User Management</h1>
+        <h1 style={S.title}>Tutor Management</h1>
       </div>
 
       <div style={S.toolbar}>
@@ -462,7 +473,7 @@ export default function AdminUsersPage() {
           <Search size={18} style={S.searchIcon} />
           <input
             type="text"
-            placeholder="Search users by name or email..."
+            placeholder="Search tutors by name or email..."
             style={S.searchInput}
             value={searchTerm}
             onChange={handleSearchChange}
@@ -471,7 +482,7 @@ export default function AdminUsersPage() {
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <button style={S.btnPrimary} onClick={() => handleOpenModal()}>
             <Plus size={18} />
-            Add User
+            Add Tutor
           </button>
         </div>
       </div>
@@ -498,7 +509,7 @@ export default function AdminUsersPage() {
               <tr>
                 <td colSpan={5} style={S.emptyState}>
                   <AlertCircle size={48} style={{ margin: "0 auto 16px", color: "#94a3b8" }} />
-                  <p>No users found matching your criteria.</p>
+                  <p>No tutors found matching your criteria.</p>
                 </td>
               </tr>
             ) : (
@@ -511,6 +522,9 @@ export default function AdminUsersPage() {
                   <td style={S.td}>{getRoleBadge(u.role)}</td>
                   <td style={S.td}>{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td style={{ ...S.td, textAlign: "right" }}>
+                    <button style={S.actionBtn} onClick={() => handleOpenViewModal(u.id)} title="View Details">
+                      <Eye size={16} />
+                    </button>
                     <button style={S.actionBtn} onClick={() => handleOpenModal(u)} title="Edit">
                       <Edit2 size={16} />
                     </button>
@@ -533,7 +547,7 @@ export default function AdminUsersPage() {
             Showing{" "}
             <b>{(meta.currentPage - 1) * meta.itemsPerPage + 1}</b> to{" "}
             <b>{Math.min(meta.currentPage * meta.itemsPerPage, meta.totalItems)}</b> of{" "}
-            <b>{meta.totalItems}</b> users
+            <b>{meta.totalItems}</b> tutors
           </div>
           <div style={S.pageControls}>
             <button
@@ -562,7 +576,7 @@ export default function AdminUsersPage() {
         <div style={S.modalOverlay}>
           <div style={S.modal}>
             <div style={S.modalHeader}>
-              <h2 style={S.modalTitle}>{editingUser ? "Edit User" : "Create New User"}</h2>
+              <h2 style={S.modalTitle}>{editingUser ? "Edit Tutor" : "Create New Tutor"}</h2>
               <button onClick={handleCloseModal} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
                 <X size={20} />
               </button>
@@ -647,13 +661,9 @@ export default function AdminUsersPage() {
 
                 {/* Role */}
                 <div style={S.inputGroup}>
-                  <label style={S.label}>Role</label>
-                  <select style={S.input} {...register("role")}>
-                    <option value="student">Student</option>
+                  <select style={S.input} {...register("role")} disabled>
                     <option value="tutor">Tutor</option>
-                    <option value="admin">Admin</option>
                   </select>
-                  {errors.role && <div style={S.errorText}>{errors.role.message}</div>}
                 </div>
               </div>
 
@@ -677,40 +687,107 @@ export default function AdminUsersPage() {
               </button>
             </div>
             <div style={S.modalBody}>
-              <p style={{ margin: 0, color: "#475569" }}>Are you sure you want to delete this user? This action cannot be undone.</p>
+              <p style={{ margin: 0, color: "#475569" }}>Are you sure you want to delete this tutor? This action cannot be undone.</p>
             </div>
             <div style={S.modalFooter}>
               <button style={S.btnGhost} onClick={() => setIsDeleteModalOpen(false)}>Cancel</button>
-              <button style={S.btnDanger} onClick={confirmDelete}>Yes, Delete User</button>
+              <button style={S.btnDanger} onClick={confirmDelete}>Yes, Delete Tutor</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Logout Confirmation Modal */}
-      {isLogoutModalOpen && (
+      {/* View Details Modal */}
+      {isViewModalOpen && viewingUserDetails && (
         <div style={S.modalOverlay}>
-          <div style={{ ...S.modal, maxWidth: "400px", maxHeight: "unset", overflowY: "unset" }}>
+          <div style={S.modal}>
             <div style={S.modalHeader}>
-              <h2 style={S.modalTitle}>Confirm Logout</h2>
+              <h2 style={S.modalTitle}>Tutor Details: {viewingUserDetails.fullName}</h2>
               <button
-                onClick={() => setIsLogoutModalOpen(false)}
+                onClick={() => setIsViewModalOpen(false)}
                 style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
               >
                 <X size={20} />
               </button>
             </div>
             <div style={S.modalBody}>
-              <p style={{ margin: 0, color: "#475569" }}>
-                Are you sure you want to log out of the admin panel?
-              </p>
+              <div style={{ display: "grid", gap: "16px" }}>
+                <div>
+                  <strong>Email:</strong> {viewingUserDetails.email}
+                </div>
+                <div>
+                  <strong>Phone Number:</strong> {viewingUserDetails.phoneNumber || "N/A"}
+                </div>
+                <div>
+                  <strong>Joined:</strong> {new Date(viewingUserDetails.createdAt).toLocaleDateString()}
+                </div>
+                
+                {viewingUserDetails.details ? (
+                  <>
+                    <hr style={{ border: "0", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
+                    <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", color: "#0f172a" }}>Teaching Stats</h3>
+                    <div>
+                      <strong>Total Courses:</strong> {viewingUserDetails.details.totalCourses}
+                    </div>
+                    <div>
+                      <strong>Total Students Taught:</strong> {viewingUserDetails.details.totalStudentsTaught}
+                    </div>
+                    <div>
+                      <strong>Total Classes Attended (Taught):</strong> {viewingUserDetails.details.totalClassesAttended}
+                    </div>
+
+                    <hr style={{ border: "0", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
+                    <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", color: "#0f172a" }}>Courses</h3>
+                    {viewingUserDetails.details.profile?.courses?.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: "20px", color: "#475569" }}>
+                        {viewingUserDetails.details.profile.courses.map((c: any, i: number) => (
+                          <li key={i}>{c.title} ({c.modules?.length || 0} modules)</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ color: "#64748b", margin: 0 }}>No courses created yet.</p>
+                    )}
+
+                    <hr style={{ border: "0", borderTop: "1px solid #e2e8f0", margin: "16px 0" }} />
+                    <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", color: "#0f172a" }}>Override Rating</h3>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: rating >= star ? "#eab308" : "#cbd5e1",
+                            padding: 0,
+                          }}
+                        >
+                          <Star size={24} fill={rating >= star ? "#eab308" : "none"} />
+                        </button>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "8px" }}>
+                      Note: Updating rating is frontend-only for now.
+                    </p>
+                  </>
+                ) : (
+                  <p style={{ color: "#64748b", marginTop: "16px" }}>No specific tutor profile details available.</p>
+                )}
+              </div>
             </div>
             <div style={S.modalFooter}>
-              <button style={S.btnGhost} onClick={() => setIsLogoutModalOpen(false)}>
-                Cancel
-              </button>
-              <button style={S.btnDanger} onClick={handleLogout}>
-                Yes, Logout
+              {viewingUserDetails.details && (
+                <button 
+                  style={S.btnPrimary} 
+                  onClick={() => alert(`Rating ${rating} saved (frontend only)!`)}
+                >
+                  Save Rating
+                </button>
+              )}
+              <button style={S.btnGhost} onClick={() => setIsViewModalOpen(false)}>
+                Close
               </button>
             </div>
           </div>

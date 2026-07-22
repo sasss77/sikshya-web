@@ -5,6 +5,7 @@ import {
   getTutorById,
   getMyTutorProfile,
   saveTutorProfile,
+  getTutorBookedSlotsApi,
 } from "../api/tutor";
 import { getTokenCookie } from "../cookies";
 
@@ -44,6 +45,16 @@ export async function saveTutorProfileAction(data: any) {
     const token = await getTokenCookie();
     if (!token) return { success: false, error: "Not authenticated" };
     const res = await saveTutorProfile(token, data);
+    return { success: true, data: res.data };
+  } catch (error: any) {
+    return { success: false, error: error?.response?.data?.message || error.message };
+  }
+}
+
+export async function fetchTutorBookedSlotsAction(id: string) {
+  try {
+    const token = await getTokenCookie();
+    const res = await getTutorBookedSlotsApi(token || null, id);
     return { success: true, data: res.data };
   } catch (error: any) {
     return { success: false, error: error?.response?.data?.message || error.message };

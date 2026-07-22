@@ -39,14 +39,15 @@ export default function LoginForm() {
       // Fetch user profile to check the role reliably
       const userRes = await getUserAction();
       const role = userRes.data?.role || result.data?.user?.role || result.data?.role;
+      const isVerifiedAdmin = userRes.data?.isVerifiedAdmin ?? result.data?.user?.isVerifiedAdmin ?? result.data?.isVerifiedAdmin;
 
       // Refresh the user context
       await refreshUser();
 
       if (role === "admin") {
-        router.push("/admin/users");
+        router.replace("/admin");
       } else {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       }
     } else {
       setServerError(result.message);

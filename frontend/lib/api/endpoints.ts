@@ -4,6 +4,12 @@ export const ENDPOINTS = {
   WHOAMI: "/users/whoami",
   UPDATE_PROFILE: "/users/update-profile",
   ADMIN_USERS: "/v1/admin/users",
+  ADMIN_STATS: "/v1/admin/users/stats",
+  ADMIN_COURSES: "/v1/admin/users/courses",
+  ADMIN_COURSE_BY_ID: "/v1/admin/users/courses/:id",
+  ADMIN_SEND_NOTIFICATION: "/v1/admin/users/notifications/send",
+  ADMIN_REQUESTS: "/v1/admin/users/requests",
+  ADMIN_VERIFY: "/v1/admin/users/:id/verify-admin",
   VERIFY_STUDENT: "/students/verify",
   STUDENT_PROFILE: "/students/profile",
   STUDENT_DASHBOARD: "/students/dashboard",
@@ -14,6 +20,7 @@ export const ENDPOINTS = {
   TUTOR_PROFILE_SAVE: "/tutors/profile",
   TUTOR_SEARCH: "/tutors/search",
   TUTOR_COURSES: "/tutors/courses",
+  TUTOR_BOOKED_SLOTS: "/tutors/:id/booked-slots",
   UPLOAD_COURSE_CONTENT: "/tutors/upload-content",
 
   // Bookings & Learnings
