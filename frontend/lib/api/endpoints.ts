@@ -34,4 +34,9 @@ export const ENDPOINTS = {
   NOTIFICATIONS_CLEAR_ALL: "/notifications/clear-all",
   NOTIFICATIONS_MY_STUDENTS: "/notifications/my-students",
   NOTIFICATIONS_SEND: "/notifications/send",
+
+  // Chat
+  CHAT_ROOMS: "/chat/rooms",
+  CHAT_MESSAGES: "/chat/rooms/:roomId/messages",
+  CHAT_SEARCH: "/chat/search",
 };

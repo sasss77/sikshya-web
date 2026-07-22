@@ -338,7 +338,7 @@ export default function CourseDetailsPage() {
                 </Link>
               )}
               <Link
-                href="/dashboard/messages"
+                href={`/dashboard/messages?userId=${enrollment?.tutorId || ""}`}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "0.4rem",
                   background: "#fff", color: "#0B4085", border: "1.5px solid #0B4085",
