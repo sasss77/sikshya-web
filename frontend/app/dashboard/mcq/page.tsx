@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
+
+/* ─── API base URL (safe for browser) ───────────────── */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
 import {
   Sparkles,
   BookOpen,
@@ -265,14 +268,30 @@ export default function MCQGeneratorPage() {
     );
   }
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setGenerating(true);
     setQuizState({ selectedAnswers: {}, submitted: false, score: 0 });
-    // Simulate AI generation — will be replaced with real API later
-    setTimeout(() => {
-      setQuestions(SAMPLE_MCQS.slice(0, count > SAMPLE_MCQS.length ? SAMPLE_MCQS.length : count));
+    setQuestions([]);
+    
+    try {
+      const res = await fetch(`${API_BASE}/ai/mcq`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, difficulty, count, topic })
+      });
+      const data = await res.json();
+      
+      if (data.success && data.questions) {
+        setQuestions(data.questions);
+      } else {
+        alert(data.error || "Failed to generate questions. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong connecting to the AI. Please try again.");
+    } finally {
       setGenerating(false);
-    }, 1800);
+    }
   };
 
   const handleSelect = (qId: number, option: string) => {
