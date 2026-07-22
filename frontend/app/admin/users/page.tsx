@@ -473,13 +473,6 @@ export default function AdminUsersPage() {
             <Plus size={18} />
             Add User
           </button>
-          <button
-            style={{ ...S.btnDanger, display: "flex", alignItems: "center", gap: "8px" }}
-            onClick={() => setIsLogoutModalOpen(true)}
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
         </div>
       </div>
 
