@@ -27,20 +27,25 @@ const AI_RESPONSES: Record<string, string> = {
   profile: "You can view and edit your profile from the **Profile** section — just click your avatar at the top right of the page. You can update your name, phone number, and profile photo.",
 };
 
-function getAIResponse(input: string): string {
-  const lower = input.toLowerCase();
-  if (lower.match(/hello|hi|hey|namaste/)) return AI_RESPONSES.hello;
-  if (lower.match(/help|what can|support/)) return AI_RESPONSES.help;
-  if (lower.match(/tutor|find|search/)) return AI_RESPONSES.tutor;
-  if (lower.match(/book|session|schedule/)) return AI_RESPONSES.booking;
-  if (lower.match(/mcq|quiz|practice|question/)) return AI_RESPONSES.mcq;
-  if (lower.match(/physics|thermodynamics|newton|electro/)) return AI_RESPONSES.physics;
-  if (lower.match(/biology|cell|genetics|medical/)) return AI_RESPONSES.biology;
-  if (lower.match(/math|calculus|algebra|geometry/)) return AI_RESPONSES.math;
-  if (lower.match(/economics|demand|supply|market/)) return AI_RESPONSES.economics;
-  if (lower.match(/price|cost|rate|fee|rs\.|rupee/)) return AI_RESPONSES.price;
-  if (lower.match(/profile|account|edit|photo/)) return AI_RESPONSES.profile;
-  return AI_RESPONSES.default;
+/* ─── API base URL (safe for browser) ───────────────── */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
+
+async function getAIResponse(input: string, history?: Array<{role: string, parts: string}>): Promise<string> {
+  try {
+    const res = await fetch(`${API_BASE}/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: input, history })
+    });
+    const data = await res.json();
+    if (data.success) {
+      return data.reply;
+    }
+    return "I'm having a little trouble connecting right now. Please try again!";
+  } catch (err) {
+    console.error(err);
+    return "Sorry, something went wrong on my end. Please try again.";
+  }
 }
 
 /* ─── Typing Indicator ───────────────────────────────── */
@@ -128,25 +133,36 @@ export default function AIChatbot() {
     if (open && !minimized) inputRef.current?.focus();
   }, [open, minimized]);
 
-  const sendMessage = (text?: string) => {
+  const sendMessage = async (text?: string) => {
     const content = (text || input).trim();
     if (!content) return;
 
     const userMsg: Message = { id: Date.now(), text: content, sender: "user", timestamp: new Date() };
+    
+    // Prepare history from existing messages
+    // Gemini expects: { role: "user" | "model", parts: string }
+    const history = messages
+      .filter(m => m.id !== 1) // skip the initial greeting to save tokens/avoid duplication
+      .map(m => ({
+        role: m.sender === "user" ? "user" : "model",
+        parts: m.text
+      }));
+
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setTyping(true);
 
-    setTimeout(() => {
-      const aiMsg: Message = {
-        id: Date.now() + 1,
-        text: getAIResponse(content),
-        sender: "ai",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, aiMsg]);
-      setTyping(false);
-    }, 1200 + Math.random() * 600);
+    const reply = await getAIResponse(content, history);
+
+    const aiMsg: Message = {
+      id: Date.now() + 1,
+      text: reply,
+      sender: "ai",
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, aiMsg]);
+    setTyping(false);
   };
 
   const reset = () => {
