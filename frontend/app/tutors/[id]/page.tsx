@@ -563,7 +563,7 @@ export default function TutorProfilePage() {
               <button
                 className="btn-outline"
                 style={{ width: "100%", justifyContent: "center" }}
-                onClick={() => router.push("/dashboard/messages")}
+                onClick={() => router.push(`/dashboard/messages?userId=${tutor?.id}`)}
               >
                 <MessageCircle size={16} /> Send a Message
               </button>
