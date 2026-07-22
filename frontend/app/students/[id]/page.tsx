@@ -191,7 +191,7 @@ export default function StudentProfilePage() {
 
           <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
             <button
-              onClick={() => router.push("/dashboard/messages")}
+              onClick={() => router.push(`/dashboard/messages?userId=${student?.id}`)}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               style={{
