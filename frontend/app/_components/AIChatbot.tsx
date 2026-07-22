@@ -68,6 +68,9 @@ const QUICK_PROMPTS = [
 /* ─── Message Bubble ─────────────────────────────────── */
 function MessageBubble({ msg }: { msg: Message }) {
   const isAI = msg.sender === "ai";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <div style={{ display: "flex", justifyContent: isAI ? "flex-start" : "flex-end", marginBottom: "0.75rem", alignItems: "flex-end", gap: "0.5rem" }}>
       {isAI && (
@@ -92,8 +95,8 @@ function MessageBubble({ msg }: { msg: Message }) {
         {msg.text.split("\n").map((line, i) => (
           <span key={i}>{line}{i < msg.text.split("\n").length - 1 && <br />}</span>
         ))}
-        <div style={{ fontSize: "0.62rem", opacity: 0.5, marginTop: "4px", textAlign: isAI ? "left" : "right" }}>
-          {msg.timestamp.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+        <div suppressHydrationWarning style={{ fontSize: "0.62rem", opacity: 0.5, marginTop: "4px", textAlign: isAI ? "left" : "right" }}>
+          {mounted ? msg.timestamp.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : ""}
         </div>
       </div>
     </div>
