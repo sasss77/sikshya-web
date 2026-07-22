@@ -45,9 +45,9 @@ export default function LoginForm() {
       await refreshUser();
 
       if (role === "admin") {
-        router.push("/admin");
+        router.replace("/admin");
       } else {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       }
     } else {
       setServerError(result.message);
