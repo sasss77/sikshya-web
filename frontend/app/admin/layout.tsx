@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/context/UserContext";
 import { logoutAction } from "@/lib/actions/auth-action";
+import { GraduationCap, Presentation, BookOpen } from "lucide-react";
 
 const S: Record<string, React.CSSProperties> = {
   root: {
@@ -184,6 +185,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/users" style={{ ...S.navItem, ...(pathname?.includes("/admin/users") ? S.navItemActive : {}) }}>
             <IconUsers />
             User Management
+          </Link>
+          <Link href="/admin/students" style={{ ...S.navItem, ...(pathname?.includes("/admin/students") ? S.navItemActive : {}) }}>
+            <GraduationCap size={20} />
+            Students
+          </Link>
+          <Link href="/admin/tutors" style={{ ...S.navItem, ...(pathname?.includes("/admin/tutors") ? S.navItemActive : {}) }}>
+            <Presentation size={20} />
+            Tutors
+          </Link>
+          <Link href="/admin/courses" style={{ ...S.navItem, ...(pathname?.includes("/admin/courses") ? S.navItemActive : {}) }}>
+            <BookOpen size={20} />
+            Courses
           </Link>
           <Link href="/admin/requests" style={{ ...S.navItem, ...(pathname?.includes("/admin/requests") ? S.navItemActive : {}) }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
