@@ -28,6 +28,7 @@ import {
 import Link from "next/link";
 import { getEnrollmentDetailAction, markModuleReadAction } from "@/lib/actions/booking-action";
 import { createBookingAction } from "@/lib/actions/booking-action";
+import { fetchTutorBookedSlotsAction } from "@/lib/actions/tutor-action";
 
 const getFileUrl = (url: string) => {
   if (url.startsWith("/uploads/")) {
@@ -73,8 +74,17 @@ export default function CourseDetailsPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<{ day: string; time: string }[]>([]);
 
-  const TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
+  const ALL_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
+  
+  const getAvailableTimeSlots = () => {
+    if (!selectedDay) return ALL_TIME_SLOTS;
+    const bookedTimesForDay = bookedSlots.filter(s => s.day === selectedDay).map(s => s.time);
+    return ALL_TIME_SLOTS.filter(slot => !bookedTimesForDay.includes(slot));
+  };
+  
+  const TIME_SLOTS = getAvailableTimeSlots();
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
@@ -89,6 +99,13 @@ export default function CourseDetailsPage() {
         const res = await getEnrollmentDetailAction(id);
         if (res.success) {
           setEnrollment(res.data);
+          
+          if (res.data?.tutorId) {
+            const slotsRes = await fetchTutorBookedSlotsAction(res.data.tutorId);
+            if (slotsRes.success && slotsRes.data) {
+              setBookedSlots(slotsRes.data);
+            }
+          }
         } else {
           showToast(res.error || "Failed to load course", "error");
         }
@@ -455,7 +472,16 @@ export default function CourseDetailsPage() {
             <p style={{ fontWeight: 700, fontSize: "0.85rem", color: "#374151", margin: "0 0 0.5rem" }}>Select Day</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.25rem" }}>
               {DAYS.map(day => (
-                <button key={day} onClick={() => setSelectedDay(day)} style={{ padding: "0.4rem 0.85rem", borderRadius: "8px", border: "1.5px solid", borderColor: selectedDay === day ? "#0B4085" : "#e2e8f0", background: selectedDay === day ? "#0B4085" : "#fff", color: selectedDay === day ? "#fff" : "#374151", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer" }}>
+                <button key={day} onClick={() => {
+                  const newDay = day;
+                  setSelectedDay(newDay);
+                  if (newDay && selectedTime) {
+                    const bookedTimesForNewDay = bookedSlots.filter(s => s.day === newDay).map(s => s.time);
+                    if (bookedTimesForNewDay.includes(selectedTime)) {
+                      setSelectedTime(null);
+                    }
+                  }
+                }} style={{ padding: "0.4rem 0.85rem", borderRadius: "8px", border: "1.5px solid", borderColor: selectedDay === day ? "#0B4085" : "#e2e8f0", background: selectedDay === day ? "#0B4085" : "#fff", color: selectedDay === day ? "#fff" : "#374151", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer" }}>
                   {day}
                 </button>
               ))}
