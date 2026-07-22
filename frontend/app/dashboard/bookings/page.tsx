@@ -214,7 +214,8 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
             }}
             onClick={(e) => {
               e.stopPropagation();
-              router.push("/dashboard/messages");
+              const targetUserId = role === "tutor" ? booking.studentId : booking.tutorId;
+              router.push(`/dashboard/messages?userId=${targetUserId}`);
             }}
             >
               <MessageSquare size={14} /> Message
