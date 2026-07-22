@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchAdminUsersApi, createAdminUserApi, updateAdminUserApi, deleteAdminUserApi, fetchAdminStatsApi } from "../api/adminUsers";
+import { fetchAdminUsersApi, fetchAdminUserByIdApi, createAdminUserApi, updateAdminUserApi, deleteAdminUserApi, fetchAdminStatsApi, fetchAdminCoursesApi, fetchAdminCourseByIdApi } from "../api/adminUsers";
 import { getTokenCookie } from "../cookies";
 
 export const getAdminStatsAction = async () => {
@@ -23,7 +23,47 @@ export const getAdminStatsAction = async () => {
   }
 };
 
-export const getAdminUsersAction = async (params: { page?: number; limit?: number; search?: string }) => {
+export const getAdminCoursesAction = async () => {
+  try {
+    const token = await getTokenCookie();
+    if (!token) {
+      return { success: false, message: "No token found" };
+    }
+    const response = await fetchAdminCoursesApi(token);
+    return {
+      success: true,
+      message: response.message,
+      data: response.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to fetch admin courses",
+    };
+  }
+};
+
+export const getAdminCourseByIdAction = async (id: string) => {
+  try {
+    const token = await getTokenCookie();
+    if (!token) {
+      return { success: false, message: "No token found" };
+    }
+    const response = await fetchAdminCourseByIdApi(token, id);
+    return {
+      success: true,
+      message: response.message,
+      data: response.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to fetch admin course by id",
+    };
+  }
+};
+
+export const getAdminUsersAction = async (params: { page?: number; limit?: number; search?: string; role?: string }) => {
   try {
     const token = await getTokenCookie();
     if (!token) {
@@ -91,6 +131,26 @@ export const getAdminUsersAction = async (params: { page?: number; limit?: numbe
     return {
       success: false,
       message: error?.response?.data?.message || "Failed to fetch users",
+    };
+  }
+};
+
+export const getAdminUserByIdAction = async (id: string) => {
+  try {
+    const token = await getTokenCookie();
+    if (!token) {
+      return { success: false, message: "No token found" };
+    }
+    const response = await fetchAdminUserByIdApi(token, id);
+    return {
+      success: true,
+      message: response.message,
+      data: response.data,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to fetch user details",
     };
   }
 };
