@@ -298,18 +298,20 @@ export default function BookingsPage() {
   const role = user.role as "student" | "tutor";
   
   // For tutors, separate pending requests. For students, keep them in the main list.
-  const pendingRequests = role === "tutor" ? allBookings.filter(b => b.status === "pending") : [];
+  const pendingRequests = role === "tutor" ? allBookings.filter(b => b.status === "pending") : allBookings.filter(b => b.status === "pending");
   // For students: exclude both pending and expired from the general non-pending pool (they have their own tab).
   // For tutors: exclude pending (handled separately), keep expired visible in its own tab.
+  // For students: include pending in the main list ("All" shows everything except expired).
   const nonPendingBookings = role === "tutor"
     ? allBookings.filter(b => b.status !== "pending")
-    : allBookings.filter(b => b.status !== "pending" && b.status !== "expired");
+    : allBookings.filter(b => b.status !== "expired");
 
   // "all" tab shows non-pending (and for students: non-expired) bookings.
   // "upcoming" tab should never include expired bookings.
   const filtered =
     activeTab === "all" ? nonPendingBookings :
-    (activeTab === "pending" || activeTab === "earnings") ? [] :
+    activeTab === "pending" ? (role === "tutor" ? [] : allBookings.filter(b => b.status === "pending")) :
+    activeTab === "earnings" ? [] :
     activeTab === "expired"
       ? allBookings.filter(b => b.status === "expired")
       : nonPendingBookings.filter(b => b.status === activeTab);
@@ -430,9 +432,15 @@ export default function BookingsPage() {
                 <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a202c", margin: "0 0 0.5rem" }}>All caught up!</h3>
                 <p style={{ fontSize: "0.875rem", color: "#64748b", margin: 0 }}>No pending booking requests.</p>
               </div>
-            ) : pendingRequests.map(r => (
-              <BookingCard key={r.id} booking={r} role={role} isPending onAccept={() => handleAcceptClick(r.id)} onDecline={() => handleDeclineClick(r.id)} onShowToast={showToast} />
-            ))}
+            ) : role === "tutor" ? (
+              pendingRequests.map(r => (
+                <BookingCard key={r.id} booking={r} role={role} isPending onAccept={() => handleAcceptClick(r.id)} onDecline={() => handleDeclineClick(r.id)} onShowToast={showToast} />
+              ))
+            ) : (
+              pendingRequests.map(r => (
+                <BookingCard key={r.id} booking={r} role={role} onShowToast={showToast} />
+              ))
+            )}
           </div>
         )}
 
