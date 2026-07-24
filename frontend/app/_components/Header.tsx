@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, User, Bell, Shield } from "lucide-react";
 import { useUser } from "@/lib/context/UserContext";
 import Image from "next/image";
@@ -16,7 +16,6 @@ const GUEST_LINKS = [
 ];
 
 const STUDENT_AUTH_LINKS = [
-  { label: "Home", href: "/" },
   { label: "Find Tutors", href: "/find-tutors" },
   { label: "My Bookings", href: "/dashboard/bookings" },
   { label: "My Learnings", href: "/dashboard/learnings" },
@@ -32,6 +31,7 @@ const TUTOR_AUTH_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -182,19 +182,25 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link
-                  href="/login"
+                <button
+                  onClick={() => router.push("/login")}
                   style={{
+                    background: "none", border: "none", cursor: "pointer",
                     fontSize: "0.875rem", fontWeight: 600,
                     color: "var(--color-primary)", textDecoration: "none",
                     transition: "opacity 0.15s",
+                    padding: 0,
                   }}
                 >
                   Login
-                </Link>
-                <Link href="/signup" className="btn-primary" style={{ padding: "0.5rem 1.25rem" }}>
+                </button>
+                <button 
+                  onClick={() => router.push("/signup")} 
+                  className="btn-primary" 
+                  style={{ padding: "0.5rem 1.25rem", border: "none", cursor: "pointer" }}
+                >
                   Sign Up
-                </Link>
+                </button>
               </>
             )}
           </div>
@@ -247,8 +253,20 @@ export default function Header() {
               </button>
             ) : (
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-                <Link href="/login" className="btn-outline" style={{ flex: 1, justifyContent: "center" }}>Login</Link>
-                <Link href="/signup" className="btn-primary" style={{ flex: 1, justifyContent: "center" }}>Sign Up</Link>
+                <button 
+                  onClick={() => { setMobileOpen(false); router.push("/login"); }} 
+                  className="btn-outline" 
+                  style={{ flex: 1, justifyContent: "center", border: "none", cursor: "pointer" }}
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={() => { setMobileOpen(false); router.push("/signup"); }} 
+                  className="btn-primary" 
+                  style={{ flex: 1, justifyContent: "center", border: "none", cursor: "pointer" }}
+                >
+                  Sign Up
+                </button>
               </div>
             )}
           </div>

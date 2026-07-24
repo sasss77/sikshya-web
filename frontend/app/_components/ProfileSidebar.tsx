@@ -13,12 +13,13 @@ interface ProfileSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { icon: PieChart, label: "My Summary", href: "/dashboard", color: "#0ea5e9" },
-  { icon: User, label: "My Profile", href: "/dashboard/profile", color: "#0B4085" },
-  { icon: GraduationCap, label: "My Learnings", href: "/dashboard/learnings", color: "#8b5cf6" },
-  { icon: Library, label: "Courses & Contents", href: "/dashboard/my-courses", color: "#db2777", tutorOnly: true },
-  { icon: BookOpen, label: "MCQ Generator", href: "/dashboard/mcq", color: "#f59e0b", studentOnly: true },
-  { icon: MessageSquare, label: "Messages", href: "/dashboard/messages", color: "#22c55e" },
+  { icon: Shield, label: "Admin Dashboard", href: "/admin", color: "#f59e0b", adminOnly: true },
+  { icon: PieChart, label: "My Summary", href: "/dashboard", color: "#0ea5e9", notAdmin: true },
+  { icon: User, label: "My Profile", href: "/dashboard/profile", color: "#0B4085", notAdmin: true },
+  { icon: GraduationCap, label: "My Learnings", href: "/dashboard/learnings", color: "#8b5cf6", notAdmin: true },
+  { icon: Library, label: "Courses & Contents", href: "/dashboard/my-courses", color: "#db2777", tutorOnly: true, notAdmin: true },
+  { icon: BookOpen, label: "MCQ Generator", href: "/dashboard/mcq", color: "#f59e0b", studentOnly: true, notAdmin: true },
+  { icon: MessageSquare, label: "Messages", href: "/dashboard/messages", color: "#22c55e", notAdmin: true },
 ];
 
 export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
@@ -69,6 +70,8 @@ export default function ProfileSidebar({ open, onClose }: ProfileSidebarProps) {
     : "U";
 
   const visibleItems = NAV_ITEMS.filter(item => {
+    if (item.adminOnly && user?.role !== "admin") return false;
+    if (item.notAdmin && user?.role === "admin") return false;
     if (item.studentOnly && user?.role !== "student") return false;
     if (item.tutorOnly && user?.role !== "tutor") return false;
     return true;
