@@ -1,6 +1,8 @@
 export const ENDPOINTS = {
   REGISTER: "/users/register",
   LOGIN: "/users/login",
+  GOOGLE_LOGIN: "/users/google-login",
+  SET_ROLE: "/users/set-role",
   WHOAMI: "/users/whoami",
   UPDATE_PROFILE: "/users/update-profile",
   ADMIN_USERS: "/v1/admin/users",
