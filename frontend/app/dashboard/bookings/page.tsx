@@ -36,6 +36,7 @@ interface Booking {
   rating?: number;
   studentId?: string;
   tutorId?: string;
+  meetLink?: string;
 }
 
 import { fetchBookingsAction, updateBookingStatusAction } from "@/lib/actions/booking-action";
@@ -189,19 +190,23 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
           </div>
         )}
 
-        {/* Actions for upcoming */}
-        {isUpcoming && !isPending && (
+        {/* Actions for upcoming or pending */}
+        {(booking.status === "upcoming" || booking.status === "pending") && !isPending && (
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
             <button style={{
               display: "flex", alignItems: "center", gap: "0.4rem",
-              background: "#0B4085", color: "#fff", border: "none",
+              background: booking.meetLink ? "#0B4085" : "#94a3b8", color: "#fff", border: "none",
               borderRadius: "8px", padding: "0.45rem 1rem",
-              fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
+              fontSize: "0.8rem", fontWeight: 600, cursor: booking.meetLink ? "pointer" : "not-allowed",
             }}
             onClick={(e) => {
               e.stopPropagation();
-              onShowToast?.("Redirecting to Google Meet...", "info");
-              window.open("https://meet.google.com/new", "_blank");
+              if (booking.meetLink) {
+                onShowToast?.("Redirecting to Google Meet...", "info");
+                window.open(booking.meetLink, "_blank");
+              } else {
+                onShowToast?.("Meet link will be generated once the tutor accepts the request.", "info");
+              }
             }}
             >
               <Video size={14} /> Join on Meet
@@ -273,6 +278,7 @@ export default function BookingsPage() {
         price: `Rs. ${b.price}`,
         initials: getInitials(user?.role === "tutor" ? b.studentName : b.tutorName),
         avatarColor: getAvatarColor(user?.role === "tutor" ? b.studentName : b.tutorName),
+        meetLink: b.meetLink,
       })));
     } else {
       showToast(res.error || "Failed to load bookings", "error");

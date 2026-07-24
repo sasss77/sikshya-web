@@ -40,57 +40,6 @@ interface QuizState {
   score: number;
 }
 
-/* ─── Dummy MCQ Data ─────────────────────────────────── */
-const SAMPLE_MCQS: MCQQuestion[] = [
-  {
-    id: 1,
-    question: "What is Newton's Second Law of Motion?",
-    options: [
-      { label: "A", text: "An object at rest stays at rest unless acted upon" },
-      { label: "B", text: "Force equals mass times acceleration (F = ma)" },
-      { label: "C", text: "For every action, there is an equal and opposite reaction" },
-      { label: "D", text: "Energy cannot be created or destroyed" },
-    ],
-    correct: "B",
-    explanation: "Newton's Second Law states that the net force on an object equals its mass multiplied by its acceleration (F = ma).",
-  },
-  {
-    id: 2,
-    question: "Which of the following is the SI unit of electric current?",
-    options: [
-      { label: "A", text: "Volt" },
-      { label: "B", text: "Watt" },
-      { label: "C", text: "Ampere" },
-      { label: "D", text: "Ohm" },
-    ],
-    correct: "C",
-    explanation: "The SI unit of electric current is the Ampere (A), named after André-Marie Ampère.",
-  },
-  {
-    id: 3,
-    question: "What is the powerhouse of the cell?",
-    options: [
-      { label: "A", text: "Nucleus" },
-      { label: "B", text: "Endoplasmic Reticulum" },
-      { label: "C", text: "Golgi Apparatus" },
-      { label: "D", text: "Mitochondria" },
-    ],
-    correct: "D",
-    explanation: "Mitochondria are known as the powerhouse of the cell because they generate most of the cell's ATP through cellular respiration.",
-  },
-  {
-    id: 4,
-    question: "What is the value of acceleration due to gravity on Earth's surface?",
-    options: [
-      { label: "A", text: "9.0 m/s²" },
-      { label: "B", text: "9.8 m/s²" },
-      { label: "C", text: "10.8 m/s²" },
-      { label: "D", text: "8.9 m/s²" },
-    ],
-    correct: "B",
-    explanation: "The standard acceleration due to gravity on Earth's surface is approximately 9.8 m/s² (often rounded to 10 m/s² for simplicity).",
-  },
-];
 
 const SUBJECTS = [
   "Physics", "Chemistry", "Biology", "Mathematics",
@@ -332,7 +281,7 @@ export default function MCQGeneratorPage() {
               <h1 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 900, color: "#1a202c", margin: 0, letterSpacing: "-0.02em" }}>
                 MCQ Generator
               </h1>
-              <p style={{ fontSize: "0.8rem", color: "#64748b", margin: 0 }}>AI-powered · Powered by Gemini</p>
+              <p style={{ fontSize: "0.8rem", color: "#64748b", margin: 0 }}>AI-powered · Powered by Grok</p>
             </div>
           </div>
           <p style={{ fontSize: "0.95rem", color: "#64748b", margin: 0, maxWidth: "540px" }}>
@@ -481,7 +430,7 @@ export default function MCQGeneratorPage() {
             </button>
 
             <p style={{ fontSize: "0.72rem", color: "#94a3b8", textAlign: "center", marginTop: "0.75rem" }}>
-              🤖 AI generation will be powered by Gemini. Currently showing sample questions.
+              🤖 AI generation is powered by Grok.
             </p>
           </div>
         )}
