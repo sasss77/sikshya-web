@@ -5,6 +5,11 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const { pathname } = request.nextUrl;
 
+  // Bypass proxy for Server Actions to prevent POST 404s
+  if (request.headers.has("next-action")) {
+    return NextResponse.next();
+  }
+
   // Protect dashboard routes (e.g. /dashboard, /dashboard/profile, etc.)
   if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
     if (!token) {
