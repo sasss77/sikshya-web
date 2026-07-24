@@ -161,6 +161,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  // Admin pending approval screen
+  if (!user.isVerifiedAdmin) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#f8fafc", flexDirection: "column", gap: "24px", padding: "32px" }}>
+        <div style={{ maxWidth: "480px", width: "100%", backgroundColor: "#fff", borderRadius: "20px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", padding: "48px 40px", textAlign: "center" }}>
+          <div style={{ width: "72px", height: "72px", borderRadius: "50%", backgroundColor: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#0f172a", marginBottom: "12px" }}>Admin Approval Pending</h1>
+          <p style={{ color: "#64748b", fontSize: "15px", lineHeight: 1.6, marginBottom: "32px" }}>
+            Your admin request has been submitted. The default admin needs to approve your account before you can access the admin dashboard. You&apos;ll be notified once approved.
+          </p>
+          <button
+            onClick={async () => { await logoutAction(); await refreshUser(); router.push("/login"); }}
+            style={{ padding: "12px 28px", backgroundColor: "#1B3C72", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: "pointer", fontFamily: "'Segoe UI', sans-serif" }}
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
