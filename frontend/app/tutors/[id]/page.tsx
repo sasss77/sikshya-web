@@ -23,7 +23,10 @@ import {
 
 import { fetchTutorByIdAction, fetchTutorBookedSlotsAction } from "@/lib/actions/tutor-action";
 import { createBookingAction, enrollInCourseAction } from "@/lib/actions/booking-action";
+import { getTutorReviewsAction } from "@/lib/actions/review-action";
 import { useUser } from "@/lib/context/UserContext";
+import ReviewModal from "@/app/_components/ReviewModal";
+import { PenLine } from "lucide-react";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -61,6 +64,8 @@ export default function TutorProfilePage() {
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
   const [bookedSlots, setBookedSlots] = useState<{ day: string; time: string }[]>([]);
+  const [realReviews, setRealReviews] = useState<any[]>([]);
+  const [reviewModal, setReviewModal] = useState<{ type: "tutor" | "course"; courseId?: string; name: string } | null>(null);
 
   React.useEffect(() => {
     const loadTutor = async () => {
@@ -72,8 +77,8 @@ export default function TutorProfilePage() {
           name: t.name,
           subjects: t.subjects || [],
           level: (t.levels && t.levels.length > 0) ? t.levels[0] : "All Levels",
-          rating: 0,
-          reviews: 0,
+          rating: t.averageRating || 0,
+          reviews: t.reviewCount || 0,
           tags: [],
           price: t.hourlyRate || 500,
           initials: getInitials(t.name),
@@ -89,6 +94,12 @@ export default function TutorProfilePage() {
           courses: t.courses || [],
           reviews_data: []
         });
+
+        // Load real reviews
+        const reviewsRes = await getTutorReviewsAction(t.userId || id);
+        if (reviewsRes.success && reviewsRes.data) {
+          setRealReviews(reviewsRes.data);
+        }
       }
       
       const slotsRes = await fetchTutorBookedSlotsAction(id);
@@ -441,33 +452,62 @@ export default function TutorProfilePage() {
               </div>
             )}
 
-            {tutor.reviews_data && tutor.reviews_data.length > 0 && (
-              <div className="card" style={{ padding: "1.75rem" }}>
-                <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {/* Real Student Reviews */}
+            <div className="card" style={{ padding: "1.75rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <MessageCircle size={16} color="var(--color-primary)" /> Student Reviews
+                  {realReviews.length > 0 && (
+                    <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#64748b" }}>({realReviews.length})</span>
+                  )}
                 </h2>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {tutor.reviews_data.map((rev: any, i: number) => (
-                    <div key={i} style={{ padding: "1rem", background: "var(--color-bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.72rem", fontWeight: 700 }}>
-                            {rev.name.charAt(0)}
-                          </div>
-                          <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{rev.name}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <StarRow rating={rev.rating} />
-                          <span style={{ fontSize: "0.72rem", color: "var(--color-text-light)" }}>{rev.date}</span>
-                        </div>
-                      </div>
-                      <p style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.55 }}>{rev.text}</p>
-                    </div>
-                  ))}
-                </div>
+                {user && user.role === "student" && (
+                  <button
+                    onClick={() => setReviewModal({ type: "tutor", name: tutor.name })}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                      background: "none", color: "#0B4085", border: "1.5px solid #0B4085",
+                      borderRadius: "8px", padding: "0.4rem 0.9rem",
+                      fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
+                    }}
+                  >
+                    <PenLine size={13} /> Review Tutor
+                  </button>
+                )}
               </div>
-            )}
+              {realReviews.length === 0 ? (
+                <p style={{ fontSize: "0.875rem", color: "#94a3b8", textAlign: "center", padding: "2rem 0" }}>
+                  No reviews yet. Be the first to review!
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {realReviews.map((rev: any, i: number) => {
+                    const name = rev.studentId?.fullName || "Anonymous";
+                    return (
+                      <div key={i} style={{ padding: "1rem", background: "var(--color-bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--color-primary)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.72rem", fontWeight: 700 }}>
+                              {name.charAt(0).toUpperCase()}
+                            </div>
+                            <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{name}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <StarRow rating={rev.rating} />
+                            <span style={{ fontSize: "0.72rem", color: "var(--color-text-light)" }}>
+                              {new Date(rev.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                          </div>
+                        </div>
+                        <p style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", lineHeight: 1.55, margin: 0 }}>{rev.reviewText}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
+
 
           {/* ── Right: Booking card ── */}
           <div style={{ position: "sticky", top: "88px", display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -731,6 +771,25 @@ export default function TutorProfilePage() {
         }}>
           {toast.message}
         </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewModal && tutor && (
+        <ReviewModal
+          isOpen={!!reviewModal}
+          onClose={() => setReviewModal(null)}
+          targetType={reviewModal.type}
+          tutorId={tutor.id}
+          courseId={reviewModal.courseId}
+          targetName={reviewModal.name}
+          onSuccess={() => {
+            showToast("Review submitted successfully!");
+            setReviewModal(null);
+            getTutorReviewsAction(tutor.id).then(res => {
+              if (res.success && res.data) setRealReviews(res.data);
+            });
+          }}
+        />
       )}
 
       <style>{`
