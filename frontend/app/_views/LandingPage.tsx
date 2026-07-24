@@ -230,7 +230,7 @@ function TutorCard({
               /hr
             </span>
           </div>
-          <Link href={`/find-tutors/${tutor.userId?._id || tutor.id}`} className="btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.78rem" }}>
+          <Link href="/login" className="btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.78rem" }}>
             Book Now
           </Link>
         </div>
