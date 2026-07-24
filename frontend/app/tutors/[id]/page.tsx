@@ -127,6 +127,11 @@ export default function TutorProfilePage() {
   const TIME_SLOTS = getAvailableTimeSlots();
 
   const handleBookSession = () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    
     if (!selectedDay || !selectedTime) {
       showToast("Please select a day and time slot first.", "error");
       return;
