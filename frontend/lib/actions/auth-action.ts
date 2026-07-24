@@ -1,7 +1,7 @@
 "use server";
 
-import { loginApi, registerApi } from "../api/auth";
-import { setTokenCookie, removeTokenCookie } from "../cookies";
+import { loginApi, registerApi, googleLoginApi, setRoleApi } from "../api/auth";
+import { setTokenCookie, removeTokenCookie, getTokenCookie } from "../cookies";
 
 export const registerAction = async (data: {
   fullName: string;
@@ -55,4 +55,51 @@ export const loginAction = async (data: {
 export const logoutAction = async () => {
   await removeTokenCookie();
   return { success: true };
+};
+
+export const googleLoginAction = async (idToken: string) => {
+  try {
+    const response = await googleLoginApi(idToken);
+
+    if (response.data?.token) {
+      await setTokenCookie(response.data.token);
+    }
+
+    return {
+      success: true,
+      message: response.message,
+      data: response.data,
+      requiresRoleSelection: response.requiresRoleSelection,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Google Login failed",
+    };
+  }
+};
+
+export const setRoleAction = async (role: string) => {
+  try {
+    const token = await getTokenCookie();
+    if (!token) return { success: false, message: "No token found" };
+
+    const response = await setRoleApi(token, role);
+
+    if (response.data?.token) {
+      await setTokenCookie(response.data.token);
+    }
+
+    return {
+      success: true,
+      message: response.message,
+      data: response.data,
+      requiresAdminApproval: response.requiresAdminApproval,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Failed to set role",
+    };
+  }
 };

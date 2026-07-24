@@ -163,6 +163,10 @@ export default function MessagesPage() {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
 
+  /* ── Track activeRoom in a ref so socket listeners always see latest ── */
+  const activeRoomRef = useRef<Room | null>(null);
+  useEffect(() => { activeRoomRef.current = activeRoom; }, [activeRoom]);
+
   /* ── Socket Setup ───────────────────────────────────── */
   useEffect(() => {
     if (!user) return;
@@ -175,32 +179,75 @@ export default function MessagesPage() {
       const s = getSocket(token);
       socketRef.current = s;
 
-      s.on("connect", () => mounted && setSocketReady(true));
-      s.on("disconnect", () => mounted && setSocketReady(false));
-      s.on("online_users", (ids: string[]) => mounted && setOnlineUsers(new Set(ids)));
-      s.on("user_online", ({ userId }: { userId: string }) =>
-        mounted && setOnlineUsers(prev => new Set([...prev, userId])));
-      s.on("user_offline", ({ userId }: { userId: string }) =>
-        mounted && setOnlineUsers(prev => { const n = new Set(prev); n.delete(userId); return n; }));
+      // Always remove existing listeners first to prevent stacking
+      const EVENTS = ["connect", "disconnect", "online_users", "user_online", "user_offline",
+        "receive_message", "new_message_notification", "typing_update", "messages_read"] as const;
+      EVENTS.forEach(e => s.off(e));
+
+      s.on("connect", () => { if (mounted) setSocketReady(true); });
+      s.on("disconnect", () => { if (mounted) setSocketReady(false); });
+      s.on("online_users", (ids: string[]) => { if (mounted) setOnlineUsers(new Set(ids)); });
+      s.on("user_online", ({ userId }: { userId: string }) => {
+        if (mounted) setOnlineUsers(prev => new Set([...prev, userId]));
+      });
+      s.on("user_offline", ({ userId }: { userId: string }) => {
+        if (mounted) setOnlineUsers(prev => { const n = new Set(prev); n.delete(userId); return n; });
+      });
 
       s.on("receive_message", (msg: any) => {
         if (!mounted) return;
         const incoming: Message = {
-          id: String(msg.id), senderId: msg.senderId, content: msg.content,
-          createdAt: msg.createdAt, readAt: msg.readAt, isMe: msg.senderId === user.id,
+          id: String(msg.id),
+          senderId: msg.senderId,
+          content: msg.content,
+          createdAt: msg.createdAt,
+          readAt: msg.readAt,
+          isMe: msg.senderId === user.id,
         };
-        setActiveRoom(cur => {
-          if (cur?.id === msg.roomId) {
-            setMessages(prev => {
-              if (prev.some(m => m.id === incoming.id)) return prev;
-              return [...prev, incoming];
-            });
-          }
-          return cur;
-        });
+
+        // Use ref (always current) to decide if this is the open chat
+        const curRoom = activeRoomRef.current;
+        if (curRoom?.id === msg.roomId) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === incoming.id)) return prev;
+            return [...prev, incoming];
+          });
+        }
+
+        // Always update sidebar preview
         setRooms(prev =>
           prev.map(r => r.id === msg.roomId
-            ? { ...r, lastMessage: msg.content, lastMessageAt: msg.createdAt, lastMessageIsMe: incoming.isMe }
+            ? {
+                ...r,
+                lastMessage: msg.content,
+                lastMessageAt: msg.createdAt,
+                lastMessageIsMe: incoming.isMe,
+                // Only bump unread if this is NOT the currently open chat AND we are the receiver
+                unreadCount: (curRoom?.id === msg.roomId) ? 0
+                  : incoming.isMe ? r.unreadCount
+                  : r.unreadCount + 1,
+              }
+            : r
+          ).sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+        );
+      });
+
+      // Receiver is NOT in the room socket yet — backend sends this directly
+      s.on("new_message_notification", (msg: { roomId: string; senderId: string; content: string; createdAt: string }) => {
+        if (!mounted) return;
+        const curRoom = activeRoomRef.current;
+        // If the room IS currently open, receive_message already handled it
+        if (curRoom?.id === msg.roomId) return;
+
+        setRooms(prev =>
+          prev.map(r => r.id === msg.roomId
+            ? {
+                ...r,
+                lastMessage: msg.content,
+                lastMessageAt: msg.createdAt,
+                lastMessageIsMe: false,
+                unreadCount: r.unreadCount + 1,
+              }
             : r
           ).sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
         );
@@ -221,8 +268,9 @@ export default function MessagesPage() {
 
     return () => {
       mounted = false;
-      ["connect", "disconnect", "online_users", "user_online", "user_offline", "receive_message", "typing_update", "messages_read"]
-        .forEach(e => socketRef.current?.off(e));
+      const EVENTS = ["connect", "disconnect", "online_users", "user_online", "user_offline",
+        "receive_message", "new_message_notification", "typing_update", "messages_read"] as const;
+      EVENTS.forEach(e => socketRef.current?.off(e));
     };
   }, [user]);
 
@@ -269,7 +317,9 @@ export default function MessagesPage() {
 
   /* ── Open Room ──────────────────────────────────────── */
   const openRoom = useCallback(async (room: Room) => {
-    if (activeRoom?.id === room.id) return;
+    // Use ref to avoid stale closure; immediately update ref before async work
+    if (activeRoomRef.current?.id === room.id) return;
+    activeRoomRef.current = room;
     setActiveRoom(room);
     setMessages([]);
     setLoadingMsgs(true);
@@ -282,7 +332,7 @@ export default function MessagesPage() {
     setLoadingMsgs(false);
     setRooms(prev => prev.map(r => r.id === room.id ? { ...r, unreadCount: 0 } : r));
     inputRef.current?.focus();
-  }, [activeRoom]);
+  }, []);
 
   /* ── Start new chat ─────────────────────────────────── */
   const startChat = useCallback(async (chatUser: ChatUser) => {
@@ -446,14 +496,15 @@ export default function MessagesPage() {
                 style={{
                   width: "100%", display: "flex", alignItems: "center", gap: "0.75rem",
                   padding: "0.75rem 1rem",
-                  background: isActive ? "#eff6ff" : "transparent",
+                  background: isActive ? "#eff6ff" : (room.unreadCount > 0 ? "#f8faff" : "transparent"),
                   border: "none",
-                  borderLeft: `3px solid ${isActive ? "#0B4085" : "transparent"}`,
+                  borderLeft: `3px solid ${isActive ? "#0B4085" : (room.unreadCount > 0 ? "#0B4085" : "transparent")}`,
                   cursor: "pointer", textAlign: "left",
-                  transition: "all 0.1s",
+                  transition: "all 0.15s",
+                  animation: room.unreadCount > 0 && !isActive ? "roomSlide 0.25s ease" : undefined,
                 }}
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "#f8fafc"; }}
-                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = room.unreadCount > 0 ? "#eff6ff" : "#f8fafc"; }}
+                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = room.unreadCount > 0 ? "#f8faff" : "transparent"; }}
               >
                 <Avatar user={room.otherUser} size={44} showOnline isOnline={isOnline} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -469,8 +520,8 @@ export default function MessagesPage() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "0.1rem" }}>
                     <p style={{
                       margin: 0, fontSize: "0.75rem",
-                      color: room.unreadCount > 0 ? "#374151" : "#94a3b8",
-                      fontWeight: room.unreadCount > 0 ? 600 : 400,
+                      color: room.unreadCount > 0 ? "#1a202c" : "#94a3b8",
+                      fontWeight: room.unreadCount > 0 ? 700 : 400,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "165px",
                     }}>
                       {room.lastMessage ? (room.lastMessageIsMe ? "You: " : "") + room.lastMessage : "Start a conversation"}
@@ -480,8 +531,10 @@ export default function MessagesPage() {
                         background: "#0B4085", color: "#fff", borderRadius: "999px",
                         fontSize: "0.62rem", fontWeight: 700, padding: "0.1rem 0.42rem",
                         flexShrink: 0, marginLeft: "0.25rem",
+                        animation: "unreadPulse 1.5s ease-in-out infinite",
+                        display: "inline-block",
                       }}>
-                        {room.unreadCount}
+                        {room.unreadCount > 99 ? "99+" : room.unreadCount}
                       </span>
                     )}
                   </div>
@@ -767,6 +820,14 @@ export default function MessagesPage() {
         @keyframes modalIn {
           from { opacity: 0; transform: scale(0.96) translateY(-8px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes unreadPulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(11,64,133,0.4); }
+          50%       { transform: scale(1.12); box-shadow: 0 0 0 4px rgba(11,64,133,0); }
+        }
+        @keyframes roomSlide {
+          from { opacity: 0.6; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
         @media (max-width: 800px) {
           .messages-wrapper { padding: 1.5rem !important; height: calc(100vh - 64px) !important; align-items: stretch !important; }

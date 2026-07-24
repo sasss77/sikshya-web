@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/lib/context/UserContext";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import Header from "@/app/_components/Header";
 import Footer from "@/app/_components/Footer";
 import AIChatbot from "@/app/_components/AIChatbot";
@@ -37,12 +38,14 @@ export default function RootLayout({
           minHeight: "100vh",
         }}
       >
-        <UserProvider>
-          <Header />
-          <div style={{ flex: 1 }}>{children}</div>
-          <Footer />
-          <AIChatbot />
-        </UserProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "PLACEHOLDER_CLIENT_ID"}>
+          <UserProvider>
+            <Header />
+            <div style={{ flex: 1 }}>{children}</div>
+            <Footer />
+            <AIChatbot />
+          </UserProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

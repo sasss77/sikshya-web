@@ -22,6 +22,10 @@ type User = {
   email: string;
   role: string;
   createdAt: string;
+  profile?: {
+    averageRating?: number;
+    reviewCount?: number;
+  };
 };
 
 type Meta = {
@@ -494,6 +498,7 @@ export default function AdminTutorsPage() {
               <th style={S.th}>Name</th>
               <th style={S.th}>Email</th>
               <th style={S.th}>Role</th>
+              <th style={S.th}>Rating</th>
               <th style={S.th}>Joined Date</th>
               <th style={{ ...S.th, textAlign: "right" }}>Actions</th>
             </tr>
@@ -520,6 +525,17 @@ export default function AdminTutorsPage() {
                   </td>
                   <td style={S.td}>{u.email}</td>
                   <td style={S.td}>{getRoleBadge(u.role)}</td>
+                  <td style={S.td}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <Star size={13} fill="#f59e0b" stroke="none" />
+                      <span style={{ fontWeight: 600, color: "#0f172a" }}>
+                        {u.profile?.averageRating ? u.profile.averageRating.toFixed(1) : "—"}
+                      </span>
+                      {u.profile?.reviewCount ? (
+                        <span style={{ fontSize: "12px", color: "#64748b" }}>({u.profile.reviewCount})</span>
+                      ) : null}
+                    </div>
+                  </td>
                   <td style={S.td}>{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td style={{ ...S.td, textAlign: "right" }}>
                     <button style={S.actionBtn} onClick={() => handleOpenViewModal(u.id)} title="View Details">

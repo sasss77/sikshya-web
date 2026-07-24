@@ -16,7 +16,9 @@ import {
   Star,
   Video,
   MessageSquare,
+  PenLine,
 } from "lucide-react";
+import ReviewModal from "@/app/_components/ReviewModal";
 
 /* ─── Types ─────────────────────────────────────────── */
 type BookingStatus = "upcoming" | "completed" | "cancelled" | "pending" | "expired";
@@ -36,6 +38,7 @@ interface Booking {
   rating?: number;
   studentId?: string;
   tutorId?: string;
+  meetLink?: string;
 }
 
 import { fetchBookingsAction, updateBookingStatusAction } from "@/lib/actions/booking-action";
@@ -63,11 +66,12 @@ const STATUS_CONFIG: Record<BookingStatus, { label: string; color: string; bg: s
   expired: { label: "Expired", color: "#64748b", bg: "#f1f5f9", Icon: Clock },
 };
 
-function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onMarkComplete, onShowToast }: {
+function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onMarkComplete, onShowToast, onReview }: {
   booking: Booking; role: string; isPending?: boolean;
   onAccept?: () => void; onDecline?: () => void;
   onMarkComplete?: () => void;
   onShowToast?: (msg: string, type?: "success" | "info" | "error") => void;
+  onReview?: (booking: Booking) => void;
 }) {
   const router = useRouter();
   const status = STATUS_CONFIG[booking.status];
@@ -171,6 +175,22 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
           </div>
         )}
 
+        {/* Write Review button for completed bookings (student only) */}
+        {booking.status === "completed" && role === "student" && !booking.rating && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onReview?.(booking); }}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "0.4rem",
+              background: "none", color: "#0B4085", border: "1.5px solid #0B4085",
+              borderRadius: "8px", padding: "0.4rem 0.9rem",
+              fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
+              marginTop: "0.5rem", transition: "all 0.15s",
+            }}
+          >
+            <PenLine size={13} /> Write a Review
+          </button>
+        )}
+
         {/* Accept / Decline for pending */}
         {isPending && (
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
@@ -189,23 +209,73 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
           </div>
         )}
 
-        {/* Actions for upcoming */}
-        {isUpcoming && !isPending && (
-          <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem", flexWrap: "wrap" }}>
-            <button style={{
-              display: "flex", alignItems: "center", gap: "0.4rem",
-              background: "#0B4085", color: "#fff", border: "none",
-              borderRadius: "8px", padding: "0.45rem 1rem",
-              fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onShowToast?.("Redirecting to Google Meet...", "info");
-              window.open("https://meet.google.com/new", "_blank");
-            }}
-            >
-              <Video size={14} /> Join on Meet
-            </button>
+        {/* Actions for upcoming or pending */}
+        {(booking.status === "upcoming" || booking.status === "pending") && !isPending && (
+          <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+
+            {/* Google Meet CTA — prominent if link exists */}
+            {booking.meetLink ? (
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <a
+                  href={booking.meetLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.stopPropagation(); onShowToast?.("Opening Google Meet...", "info"); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.45rem",
+                    background: "linear-gradient(135deg, #1a73e8, #0d5bcc)",
+                    color: "#fff", border: "none", borderRadius: "8px",
+                    padding: "0.5rem 1.1rem", fontSize: "0.82rem", fontWeight: 700,
+                    textDecoration: "none", cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(26,115,232,0.3)",
+                  }}
+                >
+                  {/* Google Meet icon (simplified SVG) */}
+                  <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M29 24a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z" fill="white"/>
+                    <path d="M40 15l-8 6v6l8 6V15Z" fill="white" fillOpacity="0.8"/>
+                    <path d="M8 15h24v18H8a2 2 0 0 1-2-2V17a2 2 0 0 1 2-2Z" fill="white" fillOpacity="0.3"/>
+                  </svg>
+                  Join Google Meet
+                </a>
+                <button
+                  title="Copy Meet link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(booking.meetLink!);
+                    onShowToast?.("Meet link copied to clipboard!", "success");
+                  }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "0.3rem",
+                    background: "none", color: "#1a73e8", border: "1.5px solid #1a73e8",
+                    borderRadius: "8px", padding: "0.5rem 0.75rem",
+                    fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Copy Link
+                </button>
+              </div>
+            ) : (
+              <button
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.4rem",
+                  background: "#94a3b8", color: "#fff", border: "none",
+                  borderRadius: "8px", padding: "0.45rem 1rem",
+                  fontSize: "0.8rem", fontWeight: 600, cursor: "not-allowed",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowToast?.("Meet link will be generated once the tutor accepts your request.", "info");
+                }}
+              >
+                <Video size={14} /> Meet link pending...
+              </button>
+            )}
+
             <button style={{
               display: "flex", alignItems: "center", gap: "0.4rem",
               background: "none", color: "#64748b", border: "1px solid #e2e8f0",
@@ -250,6 +320,7 @@ export default function BookingsPage() {
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [toast, setToast] = useState<{ message: string; type: "success" | "info" | "error" } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ id: string | number; action: "accept" | "decline" } | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
 
   const showToast = (message: string, type: "success" | "info" | "error" = "info") => {
     setToast({ message, type });
@@ -273,6 +344,7 @@ export default function BookingsPage() {
         price: `Rs. ${b.price}`,
         initials: getInitials(user?.role === "tutor" ? b.studentName : b.tutorName),
         avatarColor: getAvatarColor(user?.role === "tutor" ? b.studentName : b.tutorName),
+        meetLink: b.meetLink,
       })));
     } else {
       showToast(res.error || "Failed to load bookings", "error");
@@ -506,6 +578,7 @@ export default function BookingsPage() {
                   role={role}
                   onShowToast={showToast}
                   onMarkComplete={role === "tutor" && booking.status === "upcoming" ? () => handleMarkComplete(booking.id) : undefined}
+                  onReview={role === "student" ? (b) => setReviewTarget(b) : undefined}
                 />
               ))}
             </div>
@@ -574,6 +647,23 @@ export default function BookingsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewTarget && (
+        <ReviewModal
+          isOpen={!!reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          targetType="tutor"
+          tutorId={reviewTarget.tutorId || ""}
+          targetName={reviewTarget.tutorName}
+          onSuccess={() => {
+            showToast("Review submitted! Thank you.", "success");
+            setReviewTarget(null);
+            // Mark this booking locally as rated
+            setAllBookings(prev => prev.map(b => b.id === reviewTarget.id ? { ...b, rating: 5 } : b));
+          }}
+        />
       )}
 
       <style>{`
