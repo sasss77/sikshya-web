@@ -13,6 +13,7 @@ export interface UserData {
   createdAt: string;
   updatedAt: string;
   isVerifiedStudent?: boolean;
+  isVerifiedAdmin?: boolean;
 }
 
 interface UserContextType {
