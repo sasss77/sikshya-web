@@ -32,6 +32,9 @@ export async function fetchBookingsAction() {
   }
 }
 
+// Alias used by the earnings page
+export const fetchTutorBookingsAction = fetchBookingsAction;
+
 export async function updateBookingStatusAction(id: string, status: string, cancelReason?: string) {
   try {
     const token = await getTokenCookie();

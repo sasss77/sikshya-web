@@ -11,9 +11,13 @@ import {
   SlidersHorizontal,
   BookOpen,
   MapPin,
+  Users,
 } from "lucide-react";
 
 import { fetchTutorsAction } from "@/lib/actions/tutor-action";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+
 
 // Helper to get initials and color from name
 const getInitials = (name: string) => {
@@ -67,7 +71,7 @@ function TutorCard({ tutor }: { tutor: any }) {
       <div style={{ padding: "1.25rem" }}>
         {/* Header row */}
         <div style={{ display: "flex", gap: "1rem", marginBottom: "0.85rem" }}>
-          {/* Avatar */}
+          {/* Avatar — real profile picture or initials fallback */}
           <div
             style={{
               width: "56px",
@@ -82,9 +86,19 @@ function TutorCard({ tutor }: { tutor: any }) {
               color: "#fff",
               flexShrink: 0,
               boxShadow: `0 4px 12px ${tutor.avatarColor}44`,
+              overflow: "hidden",
             }}
           >
-            {tutor.initials}
+            {tutor.profileImage ? (
+              <img
+                src={`${BACKEND_URL}${tutor.profileImage}`}
+                alt={tutor.name}
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            ) : (
+              tutor.initials
+            )}
           </div>
 
           {/* Name + location */}
@@ -114,6 +128,24 @@ function TutorCard({ tutor }: { tutor: any }) {
               </span>
               <span style={{ color: "var(--color-border)", fontSize: "0.7rem" }}>·</span>
               <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{tutor.level}</span>
+            </div>
+            
+            {/* Rating and Reviews */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.4rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.15rem" }}>
+                <Star size={13} fill="#f59e0b" color="#f59e0b" />
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--color-text)" }}>
+                  {tutor.rating > 0 ? tutor.rating.toFixed(1) : "New"}
+                </span>
+              </div>
+              {tutor.reviews > 0 && (
+                <>
+                  <span style={{ color: "var(--color-border)", fontSize: "0.7rem" }}>·</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                    {tutor.reviews} {tutor.reviews === 1 ? 'review' : 'reviews'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -170,13 +202,15 @@ function TutorCard({ tutor }: { tutor: any }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--color-border)", paddingTop: "0.85rem" }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.1rem" }}>
-              <Star size={13} fill="#f59e0b" stroke="none" />
+              <Star size={13} fill={tutor.rating > 0 ? "#f59e0b" : "#cbd5e1"} stroke="none" />
               <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--color-text)" }}>
-                {tutor.rating ? tutor.rating.toFixed(1) : "N/A"}
+                {tutor.rating > 0 ? tutor.rating.toFixed(1) : "New"}
               </span>
-              <span style={{ fontSize: "0.75rem", color: "var(--color-text-light)" }}>
-                ({tutor.reviews || 0} reviews)
-              </span>
+              {tutor.reviews > 0 && (
+                <span style={{ fontSize: "0.75rem", color: "var(--color-text-light)" }}>
+                  ({tutor.reviews} {tutor.reviews === 1 ? "review" : "reviews"})
+                </span>
+              )}
             </div>
             <div>
               <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--color-text)" }}>Rs. {tutor.price}</span>
@@ -208,19 +242,20 @@ export default function FindTutorsPage() {
       const res = await fetchTutorsAction();
       if (res.success) {
         setAllTutors(res.data.map((t: any) => ({
-          id: t.userId, // use userId so we can link to profile
+          id: t.userId,
           name: t.name,
+          profileImage: t.profileImage || null,
           subjects: t.subjects || [],
-          level: (t.levels && t.levels.length > 0) ? t.levels[0] : "All Levels", // map first level
-          rating: 0, // not in schema yet
-          reviews: 0,
-          tags: [], // not in schema yet
+          level: (t.levels && t.levels.length > 0) ? t.levels[0] : "All Levels",
+          rating: t.averageRating || 0,
+          reviews: t.reviewCount || 0,
+          tags: t.tags || [],
           price: t.hourlyRate || 500,
           initials: getInitials(t.name),
           avatarColor: getAvatarColor(t.name),
           location: t.location || "Kathmandu",
           bio: t.bio || "",
-          courses: t.courses || []
+          courses: t.courses || [],
         })));
       }
     };

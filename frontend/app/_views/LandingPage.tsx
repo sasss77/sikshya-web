@@ -71,16 +71,30 @@ const FEATURED_TUTORS = [
   },
 ];
 
+/* ─── Helpers ─────────────────────────────────────────────────── */
+const getAvatarColor = (name: string) => {
+  const colors = ["#0B4085", "#0ea5e9", "#7c3aed", "#ec4899", "#f59e0b", "#22c55e"];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
 /* ─── Sub-components ──────────────────────────────────────────── */
 function TutorCard({
   tutor,
 }: {
   tutor: any;
 }) {
-  const tutorName = tutor.userId?.fullName || "Tutor";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+  const tutorName = tutor.name || tutor.userId?.fullName || "Tutor";
   const initials = tutorName.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2);
-  const avatarColor = "#0B4085"; // default color
+  const avatarColor = getAvatarColor(tutorName);
+  const profileImage = tutor.profileImage;
+  const rating = tutor.averageRating || 0;
+  const reviewCount = tutor.reviewCount || 0;
   const price = tutor.hourlyRate ? `Rs. ${tutor.hourlyRate}` : "Free";
+  const tutorId = tutor.userId?._id || tutor.userId || tutor.id;
 
   return (
     <div className="card tutor-card" style={{ overflow: "hidden" }}>
@@ -108,7 +122,7 @@ function TutorCard({
           ✓ Verified
         </span>
 
-        {/* Avatar circle */}
+        {/* Avatar circle — real image or initials fallback */}
         <div
           style={{
             width: "80px",
@@ -122,9 +136,20 @@ function TutorCard({
             fontWeight: 700,
             color: "#fff",
             boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+            overflow: "hidden",
+            border: "3px solid rgba(255,255,255,0.8)",
           }}
         >
-          {initials}
+          {profileImage ? (
+            <img
+              src={`${backendUrl}${profileImage}`}
+              alt={tutorName}
+              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            initials
+          )}
         </div>
       </div>
 
@@ -155,11 +180,11 @@ function TutorCard({
               gap: "0.2rem",
               fontSize: "0.8rem",
               fontWeight: 600,
-              color: "#f59e0b",
+              color: rating > 0 ? "#f59e0b" : "#94a3b8",
             }}
           >
-            <Star size={13} fill="#f59e0b" stroke="none" />
-            {tutor.rating || "4.9"}
+            <Star size={13} fill={rating > 0 ? "#f59e0b" : "none"} stroke={rating > 0 ? "#f59e0b" : "#94a3b8"} />
+            {rating > 0 ? rating.toFixed(1) : "New"}
           </span>
         </div>
 
@@ -167,12 +192,18 @@ function TutorCard({
           style={{
             fontSize: "0.78rem",
             color: "var(--color-text-muted)",
-            marginBottom: "0.75rem",
+            marginBottom: "0.5rem",
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
           }}
         >
           {tutor.subjects?.join(" · ") || "General"}
         </p>
+        {reviewCount > 0 && (
+          <p style={{ fontSize: "0.72rem", color: "#64748b", marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            <Star size={11} fill="#f59e0b" stroke="none" />
+            {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
+          </p>
+        )}
 
         {/* Tags */}
         <div
@@ -230,7 +261,7 @@ function TutorCard({
               /hr
             </span>
           </div>
-          <Link href="/login" className="btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.78rem" }}>
+          <Link href={tutorId ? `/tutors/${tutorId}` : "/find-tutors"} className="btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.78rem" }}>
             Book Now
           </Link>
         </div>

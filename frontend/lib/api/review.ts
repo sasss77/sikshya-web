@@ -1,13 +1,19 @@
 import { axiosInstance } from "./axios-instance";
 import { ENDPOINTS } from "./endpoints";
-export const createReviewApi = async (data: {
-  tutorId: string;
-  targetType: "tutor" | "course";
-  rating: number;
-  reviewText: string;
-  courseId?: string;
-}) => {
-  const response = await axiosInstance.post("/reviews", data);
+export const createReviewApi = async (
+  token: string,
+  data: {
+    tutorId: string;
+    targetType: "tutor" | "course";
+    rating: number;
+    reviewText: string;
+    courseId?: string;
+    bookingId?: string;
+  }
+) => {
+  const response = await axiosInstance.post("/reviews", data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return response.data;
 };
 

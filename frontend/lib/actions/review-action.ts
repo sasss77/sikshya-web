@@ -1,6 +1,7 @@
 "use server";
 
 import { createReviewApi, getTutorReviewsApi, getCourseReviewsApi } from "../api/review";
+import { getTokenCookie } from "../cookies";
 
 export const createReviewAction = async (data: {
   tutorId: string;
@@ -8,9 +9,13 @@ export const createReviewAction = async (data: {
   rating: number;
   reviewText: string;
   courseId?: string;
+  bookingId?: string;
 }) => {
   try {
-    const res = await createReviewApi(data);
+    const token = await getTokenCookie();
+    if (!token) return { success: false, error: "Not authenticated" };
+
+    const res = await createReviewApi(token, data);
     return { success: true, data: res.data };
   } catch (error: any) {
     return {

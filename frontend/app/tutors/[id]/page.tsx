@@ -15,18 +15,18 @@ import {
   ChevronRight,
   MessageCircle,
   Award,
-  CreditCard,
   Lock,
   X,
-  CheckCircle2,
 } from "lucide-react";
 
 import { fetchTutorByIdAction, fetchTutorBookedSlotsAction } from "@/lib/actions/tutor-action";
-import { createBookingAction, enrollInCourseAction } from "@/lib/actions/booking-action";
+import { enrollInCourseAction } from "@/lib/actions/booking-action";
+import { createCheckoutSessionAction } from "@/lib/actions/payment-action";
 import { getTutorReviewsAction } from "@/lib/actions/review-action";
 import { useUser } from "@/lib/context/UserContext";
 import ReviewModal from "@/app/_components/ReviewModal";
 import { PenLine } from "lucide-react";
+
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -115,10 +115,9 @@ export default function TutorProfilePage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  // Payment modal state
+  // Stripe payment modal
   const [showPayment, setShowPayment] = useState(false);
-  const [payStep, setPayStep] = useState<"form" | "processing" | "success">("form");
-  const [card, setCard] = useState({ name: "", number: "", expiry: "", cvc: "" });
+  const [payLoading, setPayLoading] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -137,27 +136,31 @@ export default function TutorProfilePage() {
   
   const TIME_SLOTS = getAvailableTimeSlots();
 
+  // NPR → USD conversion (same rate as backend)
+  const NPR_TO_USD = 134;
+  const priceUSD = tutor ? Math.round((tutor.price / NPR_TO_USD) * 100) / 100 : 0;
+
   const handleBookSession = () => {
     if (!user) {
       router.push("/login");
       return;
     }
-    
     if (!selectedDay || !selectedTime) {
       showToast("Please select a day and time slot first.", "error");
       return;
     }
-    setPayStep("form");
-    setCard({ name: "", number: "", expiry: "", cvc: "" });
     setShowPayment(true);
   };
 
-  const handlePay = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPayStep("processing");
+  /**
+   * Calls the backend to create a Stripe Checkout Session,
+   * then redirects the student to Stripe's hosted payment page.
+   */
+  const handleStripeCheckout = async () => {
+    if (!user || !selectedDay || !selectedTime || !tutor) return;
+    setPayLoading(true);
 
-    // Make booking api call
-    const res = await createBookingAction({
+    const res = await createCheckoutSessionAction({
       tutorId: id,
       subject: tutor.subjects[0] || "General",
       day: selectedDay,
@@ -166,24 +169,16 @@ export default function TutorProfilePage() {
       notes: "Booked via platform",
     });
 
-    if (res.success) {
-      setPayStep("success");
+    if (res.success && res.data?.url) {
+      // Redirect to Stripe hosted checkout
+      window.location.href = res.data.url;
     } else {
-      showToast(res.error || "Failed to book session", "error");
+      setPayLoading(false);
       setShowPayment(false);
+      showToast(res.error || "Failed to initiate payment. Please try again.", "error");
     }
   };
 
-  const formatCardNumber = (v: string) => {
-    const digits = v.replace(/\D/g, "").slice(0, 16);
-    return digits.replace(/(\d{4})/g, "$1 ").trim();
-  };
-
-  const formatExpiry = (v: string) => {
-    const digits = v.replace(/\D/g, "").slice(0, 4);
-    if (digits.length >= 3) return digits.slice(0, 2) + "/" + digits.slice(2);
-    return digits;
-  };
 
   if (loading) {
     return (
@@ -595,11 +590,11 @@ export default function TutorProfilePage() {
                 style={{ width: "100%", justifyContent: "center", padding: "0.85rem", fontSize: "0.9rem" }}
                 onClick={handleBookSession}
               >
-                Book Session — Rs. {tutor.price}
+                Book Session — ${priceUSD} USD
               </button>
 
-              <p style={{ fontSize: "0.72rem", color: "var(--color-text-light)", textAlign: "center", marginTop: "0.65rem" }}>
-                Free cancellation up to 24 hours before
+              <p style={{ fontSize: "0.72rem", color: "var(--color-text-light)", textAlign: "center", marginTop: "0.4rem" }}>
+                ≈ Rs. {tutor.price} NPR · Secure payment via Stripe
               </p>
             </div>
 
@@ -617,10 +612,10 @@ export default function TutorProfilePage() {
         </div>
       </div>
 
-      {/* ── Payment Modal ── */}
+      {/* ── Payment Modal (Stripe Checkout) ── */}
       {showPayment && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.65)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
-          <div style={{ background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "460px", boxShadow: "0 30px 60px rgba(0,0,0,0.3)", overflow: "hidden" }}>
+          <div style={{ background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "440px", boxShadow: "0 30px 60px rgba(0,0,0,0.3)", overflow: "hidden" }}>
 
             {/* Modal Header */}
             <div style={{ background: "linear-gradient(135deg, #0B4085, #1e3a8a)", padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -628,131 +623,72 @@ export default function TutorProfilePage() {
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem", margin: "0 0 0.2rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>Secure Checkout</p>
                 <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 800, margin: 0 }}>Book with {tutor.name}</h2>
               </div>
-              {payStep !== "processing" && (
+              {!payLoading && (
                 <button onClick={() => setShowPayment(false)} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "8px", padding: "0.4rem", cursor: "pointer", display: "flex" }}>
                   <X size={18} color="#fff" />
                 </button>
               )}
             </div>
 
-            {/* Order summary strip */}
-            {payStep !== "success" && (
-              <div style={{ background: "#f8fafc", padding: "1rem 2rem", display: "flex", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0" }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}>Session</p>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: "0.95rem", color: "#1e293b" }}>{selectedDay} · {selectedTime}</p>
-                </div>
+            {/* Order Summary */}
+            <div style={{ background: "#f8fafc", padding: "1.25rem 2rem", borderBottom: "1px solid #e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 500 }}>Session</span>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#1e293b" }}>{selectedDay} · {selectedTime}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.6rem" }}>
+                <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 500 }}>Subject</span>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#1e293b" }}>{tutor.subjects[0] || "General"}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.6rem", borderTop: "1px dashed #e2e8f0" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#334155" }}>Total Charged</span>
                 <div style={{ textAlign: "right" }}>
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}>Total</p>
-                  <p style={{ margin: 0, fontWeight: 800, fontSize: "1.1rem", color: "#0B4085" }}>Rs. {tutor.price}</p>
+                  <p style={{ margin: 0, fontWeight: 900, fontSize: "1.25rem", color: "#0B4085" }}>${priceUSD} USD</p>
+                  <p style={{ margin: 0, fontSize: "0.72rem", color: "#94a3b8" }}>≈ Rs. {tutor.price} NPR</p>
                 </div>
               </div>
-            )}
+            </div>
 
             <div style={{ padding: "1.75rem 2rem" }}>
-              {payStep === "form" && (
-                <form onSubmit={handlePay} style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "8px", padding: "0.6rem 1rem", marginBottom: "0.25rem" }}>
-                    <Lock size={14} color="#0284c7" />
-                    <span style={{ fontSize: "0.78rem", color: "#0369a1", fontWeight: 600 }}>256-bit SSL encrypted · Powered by Stripe</span>
-                  </div>
+              {/* Security badge */}
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "0.6rem 1rem", marginBottom: "1.25rem" }}>
+                <Lock size={14} color="#16a34a" />
+                <span style={{ fontSize: "0.78rem", color: "#15803d", fontWeight: 600 }}>Payments are secured by Stripe · 256-bit SSL</span>
+              </div>
 
-                  {/* Name on card */}
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "0.35rem" }}>Name on Card</label>
-                    <input
-                      required
-                      type="text"
-                      placeholder="e.g. Ram Bahadur"
-                      value={card.name}
-                      onChange={e => setCard({ ...card, name: e.target.value })}
-                      style={{ width: "100%", padding: "0.7rem 1rem", borderRadius: "9px", border: "1.5px solid #e2e8f0", fontSize: "0.9rem", outline: "none" }}
-                      onFocus={e => e.target.style.borderColor = "#0B4085"}
-                      onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-                    />
-                  </div>
+              {/* Stripe Pay button */}
+              <button
+                onClick={handleStripeCheckout}
+                disabled={payLoading}
+                style={{
+                  background: payLoading ? "#94a3b8" : "linear-gradient(135deg, #635BFF, #4f46e5)",
+                  color: "#fff", border: "none",
+                  padding: "1rem", borderRadius: "10px",
+                  fontSize: "1rem", fontWeight: 800, cursor: payLoading ? "not-allowed" : "pointer",
+                  width: "100%", boxShadow: payLoading ? "none" : "0 4px 14px rgba(99,91,255,0.35)",
+                  transition: "all 0.2s",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem",
+                }}
+              >
+                {payLoading ? (
+                  <>
+                    <div style={{ width: "18px", height: "18px", border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+                    Redirecting to Stripe...
+                  </>
+                ) : (
+                  <>
+                    {/* Stripe logo */}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                      <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                    </svg>
+                    Pay ${priceUSD} with Stripe →
+                  </>
+                )}
+              </button>
 
-                  {/* Card number */}
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "0.35rem" }}>Card Number</label>
-                    <div style={{ position: "relative" }}>
-                      <CreditCard size={16} color="#94a3b8" style={{ position: "absolute", left: "0.85rem", top: "50%", transform: "translateY(-50%)" }} />
-                      <input
-                        required
-                        type="text"
-                        placeholder="1234 5678 9012 3456"
-                        value={card.number}
-                        onChange={e => setCard({ ...card, number: formatCardNumber(e.target.value) })}
-                        maxLength={19}
-                        style={{ width: "100%", padding: "0.7rem 1rem 0.7rem 2.5rem", borderRadius: "9px", border: "1.5px solid #e2e8f0", fontSize: "0.9rem", outline: "none", fontFamily: "monospace", letterSpacing: "0.08em" }}
-                        onFocus={e => e.target.style.borderColor = "#0B4085"}
-                        onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Expiry + CVC */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "0.35rem" }}>Expiry Date</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="MM/YY"
-                        value={card.expiry}
-                        onChange={e => setCard({ ...card, expiry: formatExpiry(e.target.value) })}
-                        maxLength={5}
-                        style={{ width: "100%", padding: "0.7rem 1rem", borderRadius: "9px", border: "1.5px solid #e2e8f0", fontSize: "0.9rem", outline: "none" }}
-                        onFocus={e => e.target.style.borderColor = "#0B4085"}
-                        onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#334155", marginBottom: "0.35rem" }}>CVC</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="123"
-                        value={card.cvc}
-                        onChange={e => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "").slice(0, 3) })}
-                        maxLength={3}
-                        style={{ width: "100%", padding: "0.7rem 1rem", borderRadius: "9px", border: "1.5px solid #e2e8f0", fontSize: "0.9rem", outline: "none" }}
-                        onFocus={e => e.target.style.borderColor = "#0B4085"}
-                        onBlur={e => e.target.style.borderColor = "#e2e8f0"}
-                      />
-                    </div>
-                  </div>
-
-                  <button type="submit" style={{ background: "linear-gradient(135deg, #0B4085, #1e3a8a)", color: "#fff", border: "none", padding: "0.9rem", borderRadius: "10px", fontSize: "0.95rem", fontWeight: 800, cursor: "pointer", width: "100%", boxShadow: "0 4px 14px rgba(11,64,133,0.25)", marginTop: "0.25rem" }}>
-                    Pay Rs. {tutor.price} →
-                  </button>
-                </form>
-              )}
-
-              {payStep === "processing" && (
-                <div style={{ textAlign: "center", padding: "2rem 0" }}>
-                  <div style={{ width: "56px", height: "56px", border: "5px solid #e2e8f0", borderTopColor: "#0B4085", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 1.25rem" }} />
-                  <p style={{ fontWeight: 700, color: "#1e293b", fontSize: "1rem", margin: "0 0 0.4rem" }}>Processing Payment...</p>
-                  <p style={{ color: "#64748b", fontSize: "0.85rem", margin: 0 }}>Please do not close this window.</p>
-                </div>
-              )}
-
-              {payStep === "success" && (
-                <div style={{ textAlign: "center", padding: "1.5rem 0" }}>
-                  <div style={{ width: "72px", height: "72px", borderRadius: "50%", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem", boxShadow: "0 0 0 10px rgba(22,163,74,0.1)" }}>
-                    <CheckCircle2 size={36} color="#16a34a" />
-                  </div>
-                  <h3 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#166534", margin: "0 0 0.5rem" }}>Booking Confirmed!</h3>
-                  <p style={{ color: "#475569", fontSize: "0.9rem", margin: "0 0 0.25rem" }}>{tutor.name} · {selectedDay} at {selectedTime}</p>
-                  <p style={{ color: "#64748b", fontSize: "0.82rem", margin: "0 0 1.75rem" }}>A confirmation has been sent to your email.</p>
-                  <button
-                    onClick={() => { setShowPayment(false); router.push("/dashboard/bookings"); }}
-                    style={{ background: "#16a34a", color: "#fff", border: "none", padding: "0.85rem 2rem", borderRadius: "10px", fontWeight: 800, fontSize: "0.95rem", cursor: "pointer", width: "100%" }}
-                  >
-                    View My Bookings
-                  </button>
-                </div>
-              )}
+              <p style={{ textAlign: "center", fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.75rem" }}>
+                You will be redirected to Stripe's secure payment page.
+              </p>
             </div>
           </div>
         </div>
@@ -782,11 +718,22 @@ export default function TutorProfilePage() {
           tutorId={tutor.id}
           courseId={reviewModal.courseId}
           targetName={reviewModal.name}
-          onSuccess={() => {
+          onSuccess={(_rating: number) => {
             showToast("Review submitted successfully!");
             setReviewModal(null);
+            // Refresh reviews and re-fetch tutor to get updated average rating
             getTutorReviewsAction(tutor.id).then(res => {
               if (res.success && res.data) setRealReviews(res.data);
+            });
+            // Re-fetch the tutor profile to get updated averageRating & reviewCount
+            fetchTutorByIdAction(tutor.id).then(res => {
+              if (res.success && res.data) {
+                setTutor((prev: any) => ({
+                  ...prev,
+                  rating: res.data.averageRating || 0,
+                  reviews: res.data.reviewCount || 0,
+                }));
+              }
             });
           }}
         />
