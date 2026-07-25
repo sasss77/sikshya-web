@@ -17,8 +17,12 @@ import {
   Video,
   MessageSquare,
   PenLine,
+  Flag,
 } from "lucide-react";
 import ReviewModal from "@/app/_components/ReviewModal";
+import ReportModal from "@/app/_components/ReportModal";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
 
 /* ─── Types ─────────────────────────────────────────── */
 type BookingStatus = "upcoming" | "completed" | "cancelled" | "pending" | "expired";
@@ -35,6 +39,7 @@ interface Booking {
   price: string;
   initials: string;
   avatarColor: string;
+  profileImage?: string;
   rating?: number;
   studentId?: string;
   tutorId?: string;
@@ -66,12 +71,13 @@ const STATUS_CONFIG: Record<BookingStatus, { label: string; color: string; bg: s
   expired: { label: "Expired", color: "#64748b", bg: "#f1f5f9", Icon: Clock },
 };
 
-function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onMarkComplete, onShowToast, onReview }: {
+function BookingCard({ booking, role, isPending = false, onAccept, onDecline, onMarkComplete, onShowToast, onReview, onReport }: {
   booking: Booking; role: string; isPending?: boolean;
   onAccept?: () => void; onDecline?: () => void;
   onMarkComplete?: () => void;
   onShowToast?: (msg: string, type?: "success" | "info" | "error") => void;
   onReview?: (booking: Booking) => void;
+  onReport?: (booking: Booking) => void;
 }) {
   const router = useRouter();
   const status = STATUS_CONFIG[booking.status];
@@ -110,12 +116,21 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
         {/* Avatar */}
         <div style={{
           width: "52px", height: "52px", borderRadius: "50%",
-          background: booking.avatarColor, display: "flex",
-          alignItems: "center", justifyContent: "center",
+          background: booking.profileImage ? "transparent" : booking.avatarColor,
+          display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "1.1rem", fontWeight: 700, color: "#fff",
-          flexShrink: 0,
+          flexShrink: 0, overflow: "hidden",
         }}>
-          {booking.initials}
+          {booking.profileImage ? (
+            <img
+              src={booking.profileImage}
+              alt={personName}
+              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            booking.initials
+          )}
         </div>
 
         {/* Name Info */}
@@ -145,6 +160,24 @@ function BookingCard({ booking, role, isPending = false, onAccept, onDecline, on
             }}>
               <StatusIcon size={12} /> {status.label}
             </span>
+          )}
+
+          {/* Report Button */}
+          {!isPending && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onReport?.(booking); }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "0.3rem",
+                background: "none", color: "#64748b", border: "1px solid #e2e8f0",
+                borderRadius: "999px", padding: "0.2rem 0.6rem",
+                fontSize: "0.7rem", fontWeight: 600, cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.backgroundColor = "#fef2f2"; }}
+              onMouseOut={(e) => { e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.backgroundColor = "transparent"; }}
+            >
+              <Flag size={12} /> Report
+            </button>
           )}
         </div>
 
@@ -321,6 +354,7 @@ export default function BookingsPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "info" | "error" } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ id: string | number; action: "accept" | "decline" } | null>(null);
   const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
+  const [reportTarget, setReportTarget] = useState<Booking | null>(null);
 
   const showToast = (message: string, type: "success" | "info" | "error" = "info") => {
     setToast({ message, type });
@@ -330,24 +364,29 @@ export default function BookingsPage() {
   const loadBookings = async () => {
     const res = await fetchBookingsAction();
     if (res.success) {
-      setAllBookings(res.data.map((b: any) => ({
-        id: b.id,
-        studentId: b.studentId,
-        tutorId: b.tutorId,
-        tutorName: b.tutorName,
-        studentName: b.studentName,
-        subject: b.subject,
-        date: b.sessionDate || b.createdAt,
-        time: b.time,
-        duration: b.duration,
-        status: b.status,
-        // Show USD if available, fall back to NPR display
-        price: b.priceUSD ? `$${b.priceUSD}` : `Rs. ${b.price}`,
-        initials: getInitials(user?.role === "tutor" ? b.studentName : b.tutorName),
-        avatarColor: getAvatarColor(user?.role === "tutor" ? b.studentName : b.tutorName),
-        meetLink: b.meetLink,
-        rating: b.rating || undefined,
-      })));
+      setAllBookings(res.data.map((b: any) => {
+        const isUserTutor = user?.role === "tutor";
+        const personName = isUserTutor ? b.studentName : b.tutorName;
+        const personImage = isUserTutor ? b.studentImage : b.tutorImage;
+        return {
+          id: b.id,
+          studentId: b.studentId,
+          tutorId: b.tutorId,
+          tutorName: b.tutorName,
+          studentName: b.studentName,
+          subject: b.subject,
+          date: b.sessionDate || b.createdAt,
+          time: b.time,
+          duration: b.duration,
+          status: b.status,
+          price: b.priceUSD ? `$${b.priceUSD}` : `Rs. ${b.price}`,
+          initials: getInitials(personName),
+          avatarColor: getAvatarColor(personName),
+          profileImage: personImage ? `${BACKEND_URL}${personImage}` : undefined,
+          meetLink: b.meetLink,
+          rating: b.rating || undefined,
+        };
+      }));
     } else {
       showToast(res.error || "Failed to load bookings", "error");
     }
@@ -515,11 +554,11 @@ export default function BookingsPage() {
               </div>
             ) : role === "tutor" ? (
               pendingRequests.map(r => (
-                <BookingCard key={r.id} booking={r} role={role} isPending onAccept={() => handleAcceptClick(r.id)} onDecline={() => handleDeclineClick(r.id)} onShowToast={showToast} />
+                <BookingCard key={r.id} booking={r} role={role} isPending onAccept={() => handleAcceptClick(r.id)} onDecline={() => handleDeclineClick(r.id)} onShowToast={showToast} onReport={(b) => setReportTarget(b)} />
               ))
             ) : (
               pendingRequests.map(r => (
-                <BookingCard key={r.id} booking={r} role={role} onShowToast={showToast} />
+                <BookingCard key={r.id} booking={r} role={role} onShowToast={showToast} onReport={(b) => setReportTarget(b)} />
               ))
             )}
           </div>
@@ -587,6 +626,7 @@ export default function BookingsPage() {
                   onShowToast={showToast}
                   onMarkComplete={role === "tutor" && booking.status === "upcoming" ? () => handleMarkComplete(booking.id) : undefined}
                   onReview={role === "student" ? (b) => setReviewTarget(b) : undefined}
+                  onReport={(b) => setReportTarget(b)}
                 />
               ))}
             </div>
@@ -672,6 +712,16 @@ export default function BookingsPage() {
             // Mark this booking locally as rated
             setAllBookings(prev => prev.map(b => b.id === reviewTarget.id ? { ...b, rating } : b));
           }}
+        />
+      )}
+
+      {/* Report Modal */}
+      {reportTarget && (
+        <ReportModal
+          reportedUserId={(user?.role === "tutor" ? reportTarget.studentId : reportTarget.tutorId) || ""}
+          reportedUserName={user?.role === "tutor" ? reportTarget.studentName : reportTarget.tutorName}
+          onClose={() => setReportTarget(null)}
+          onSuccess={() => showToast("Report submitted successfully!", "success")}
         />
       )}
 

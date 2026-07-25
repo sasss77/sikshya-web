@@ -25,9 +25,10 @@ import { createCheckoutSessionAction } from "@/lib/actions/payment-action";
 import { getTutorReviewsAction } from "@/lib/actions/review-action";
 import { useUser } from "@/lib/context/UserContext";
 import ReviewModal from "@/app/_components/ReviewModal";
-import { PenLine } from "lucide-react";
+import ReportModal from "@/app/_components/ReportModal";
+import { PenLine, Flag } from "lucide-react";
 
-
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 // Helper to get initials and color from name
@@ -66,6 +67,7 @@ export default function TutorProfilePage() {
   const [bookedSlots, setBookedSlots] = useState<{ day: string; time: string }[]>([]);
   const [realReviews, setRealReviews] = useState<any[]>([]);
   const [reviewModal, setReviewModal] = useState<{ type: "tutor" | "course"; courseId?: string; name: string } | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   React.useEffect(() => {
     const loadTutor = async () => {
@@ -92,7 +94,8 @@ export default function TutorProfilePage() {
           sessionTypes: t.sessionTypes || [],
           achievements: [],
           courses: t.courses || [],
-          reviews_data: []
+          reviews_data: [],
+          profileImage: t.profileImage ? `${BACKEND_URL}${t.profileImage}` : null
         });
 
         // Load real reviews
@@ -246,20 +249,48 @@ export default function TutorProfilePage() {
                     fontSize: "1.75rem",
                     fontWeight: 800,
                     color: "#fff",
-                    flexShrink: 0,
-                    boxShadow: `0 6px 20px ${tutor.avatarColor}55`,
-                  }}
-                >
-                  {tutor.initials}
-                </div>
+                  flexShrink: 0,
+                  boxShadow: `0 6px 20px ${tutor.avatarColor}55`,
+                  overflow: "hidden",
+                }}
+              >
+                {tutor.profileImage ? (
+                  <img
+                    src={tutor.profileImage}
+                    alt={tutor.name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  tutor.initials
+                )}
+              </div>
 
                 {/* Info */}
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.4rem" }}>
-                    <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.01em" }}>{tutor.name}</h1>
-                    <span style={{ background: "#dcfce7", color: "#15803d", fontSize: "0.72rem", fontWeight: 700, padding: "0.2rem 0.65rem", borderRadius: "var(--radius-full)" }}>
-                      ✓ Verified
-                    </span>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "0.4rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                      <h1 style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.01em" }}>{tutor.name}</h1>
+                      <span style={{ background: "#dcfce7", color: "#15803d", fontSize: "0.72rem", fontWeight: 700, padding: "0.2rem 0.65rem", borderRadius: "var(--radius-full)" }}>
+                        ✓ Verified
+                      </span>
+                    </div>
+                    {user && user.role === "student" && (
+                      <button
+                        onClick={() => setShowReportModal(true)}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                          background: "none", color: "#64748b", border: "1px solid #e2e8f0",
+                          borderRadius: "6px", padding: "0.3rem 0.6rem",
+                          fontSize: "0.75rem", fontWeight: 500, cursor: "pointer",
+                          transition: "all 0.2s"
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.borderColor = "#fca5a5"; e.currentTarget.style.backgroundColor = "#fef2f2"; }}
+                        onMouseOut={(e) => { e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.backgroundColor = "transparent"; }}
+                      >
+                        <Flag size={14} /> Report
+                      </button>
+                    )}
                   </div>
                   <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginBottom: "0.75rem" }}>
                     {tutor.institution}
@@ -735,6 +766,19 @@ export default function TutorProfilePage() {
                 }));
               }
             });
+          }}
+        />
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && tutor && (
+        <ReportModal
+          reportedUserId={tutor.id || id}
+          reportedUserName={tutor.name}
+          onClose={() => setShowReportModal(false)}
+          onSuccess={() => {
+            showToast("Report submitted successfully!");
+            setShowReportModal(false);
           }}
         />
       )}
