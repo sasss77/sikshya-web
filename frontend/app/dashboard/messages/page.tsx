@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/lib/context/UserContext";
 import {
@@ -132,7 +132,7 @@ function Bubble({ msg }: { msg: Message }) {
 }
 
 /* ─── Main Page ────────────────────────────────────────── */
-export default function MessagesPage() {
+function MessagesContent() {
   const { user, loading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -844,5 +844,13 @@ export default function MessagesPage() {
       `}</style>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center" }}>Loading messages...</div>}>
+      <MessagesContent />
+    </Suspense>
   );
 }
