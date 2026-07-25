@@ -17,6 +17,8 @@ import {
   getTokenAction,
 } from "@/lib/actions/chat-actions";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
+
 /* ─── Types ───────────────────────────────────────────── */
 interface ChatUser {
   id: string;
@@ -76,7 +78,7 @@ function Avatar({ user, size = 40, showOnline = false, isOnline = false }: {
   return (
     <div style={{ position: "relative", flexShrink: 0 }}>
       {user.profileImage ? (
-        <img src={user.profileImage} alt={user.fullName}
+        <img src={user.profileImage.startsWith('http') ? user.profileImage : `${BACKEND_URL}${user.profileImage}`} alt={user.fullName}
           style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover" }} />
       ) : (
         <div style={{

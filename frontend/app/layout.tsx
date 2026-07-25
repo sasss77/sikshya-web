@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import Header from "@/app/_components/Header";
 import Footer from "@/app/_components/Footer";
 import AIChatbot from "@/app/_components/AIChatbot";
+import ErrorSuppressor from "@/app/_components/ErrorSuppressor";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({
       >
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "PLACEHOLDER_CLIENT_ID"}>
           <UserProvider>
+            <ErrorSuppressor />
             <Header />
             <div style={{ flex: 1 }}>{children}</div>
             <Footer />

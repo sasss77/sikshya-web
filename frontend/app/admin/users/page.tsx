@@ -327,6 +327,7 @@ export default function AdminUsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -511,6 +512,9 @@ export default function AdminUsersPage() {
                   <td style={S.td}>{getRoleBadge(u.role)}</td>
                   <td style={S.td}>{new Date(u.createdAt).toLocaleDateString()}</td>
                   <td style={{ ...S.td, textAlign: "right" }}>
+                    <button style={S.actionBtn} onClick={() => setViewingUser(u)} title="View">
+                      <Eye size={16} />
+                    </button>
                     <button style={S.actionBtn} onClick={() => handleOpenModal(u)} title="Edit">
                       <Edit2 size={16} />
                     </button>
@@ -682,6 +686,45 @@ export default function AdminUsersPage() {
             <div style={S.modalFooter}>
               <button style={S.btnGhost} onClick={() => setIsDeleteModalOpen(false)}>Cancel</button>
               <button style={S.btnDanger} onClick={confirmDelete}>Yes, Delete User</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View User Modal */}
+      {viewingUser && (
+        <div style={S.modalOverlay}>
+          <div style={S.modal}>
+            <div style={S.modalHeader}>
+              <h2 style={S.modalTitle}>View Profile</h2>
+              <button onClick={() => setViewingUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={S.modalBody}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div>
+                  <label style={S.label}>Full Name</label>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#0f172a", fontWeight: 500 }}>{viewingUser.fullName}</p>
+                </div>
+                <div>
+                  <label style={S.label}>Email Address</label>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#0f172a" }}>{viewingUser.email}</p>
+                </div>
+                <div>
+                  <label style={S.label}>Role</label>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#0f172a" }}>{viewingUser.role.charAt(0).toUpperCase() + viewingUser.role.slice(1)}</p>
+                </div>
+                <div>
+                  <label style={S.label}>Joined Date</label>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#0f172a" }}>{new Date(viewingUser.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+            <div style={S.modalFooter}>
+              <button style={S.btnGhost} onClick={() => setViewingUser(null)}>
+                Close
+              </button>
             </div>
           </div>
         </div>
