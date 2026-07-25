@@ -7,6 +7,7 @@ import { useUser } from "@/lib/context/UserContext";
 import { getTokenAction } from "@/lib/actions/user-actions";
 import { logoutAction } from "@/lib/actions/auth-action";
 import { fetchStudentProfileAction, fetchStudentDashboardAction } from "@/lib/actions/student-action";
+import { fetchMyTutorProfileAction } from "@/lib/actions/tutor-action";
 import axios from "axios";
 
 // ─── Component Styles ───
@@ -631,6 +632,9 @@ export default function ProfilePage() {
         upcomingSessions: number;
     }>({ activeCourses: 0, hoursLearned: 0, upcomingSessions: 0 });
 
+    // Tutor total courses (for tutor role)
+    const [tutorTotalCourses, setTutorTotalCourses] = useState<number | null>(null);
+
     // Local profile data (populated from context)
     const [profileData, setProfileData] = useState({
         fullName: "",
@@ -700,6 +704,16 @@ export default function ProfilePage() {
             }
         };
         load();
+    }, [user]);
+
+    // Fetch tutor profile to get total course count
+    useEffect(() => {
+        if (!user || user.role !== "tutor") return;
+        fetchMyTutorProfileAction().then((res) => {
+            if (res.success && res.data) {
+                setTutorTotalCourses(res.data.courses?.length ?? 0);
+            }
+        });
     }, [user]);
 
     const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:5000";
@@ -887,9 +901,16 @@ export default function ProfilePage() {
                             {/* Active Courses Summary Counter */}
                             <div style={{ ...S.cardBase, ...S.statCard, background: "#1e3a8a" }}>
                                 <span style={{ ...S.statCount, color: "#fff" }}>
-                                    {dashboardStats.activeCourses < 10 ? `0${dashboardStats.activeCourses}` : dashboardStats.activeCourses}
+                                    {(() => {
+                                        const count = user?.role === "tutor"
+                                            ? (tutorTotalCourses ?? 0)
+                                            : dashboardStats.activeCourses;
+                                        return count < 10 ? `0${count}` : count;
+                                    })()}
                                 </span>
-                                <span style={{ ...S.statLabel, color: "#93c5fd" }}>Active Courses</span>
+                                <span style={{ ...S.statLabel, color: "#93c5fd" }}>
+                                    {user?.role === "tutor" ? "Total Courses" : "Active Courses"}
+                                </span>
                             </div>
                         </div>
 
