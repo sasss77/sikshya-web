@@ -1098,13 +1098,13 @@ function TutorDashboard({ name }: { name: string }) {
     .slice(0, 4)
     .map((b) => {
       if (b.status === "pending") {
-        return { icon: Bell, text: `New booking request from ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#f59e0b" };
+        return { icon: Bell, text: `New booking request from ${b.studentName}`, time: new Date(b.sessionDate || b.createdAt).toLocaleDateString(), color: "#f59e0b" };
       } else if (b.status === "completed") {
-        return { icon: CheckCircle2, text: `Completed session with ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#22c55e" };
+        return { icon: CheckCircle2, text: `Completed session with ${b.studentName}`, time: new Date(b.sessionDate || b.createdAt).toLocaleDateString(), color: "#22c55e" };
       } else if (b.status === "upcoming") {
-        return { icon: Calendar, text: `Accepted session with ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#0B4085" };
+        return { icon: Calendar, text: `Accepted session with ${b.studentName}`, time: new Date(b.sessionDate || b.createdAt).toLocaleDateString(), color: "#0B4085" };
       } else {
-        return { icon: XCircle, text: `Cancelled session with ${b.studentName}`, time: new Date(b.createdAt).toLocaleDateString(), color: "#ef4444" };
+        return { icon: XCircle, text: `Cancelled session with ${b.studentName}`, time: new Date(b.sessionDate || b.createdAt).toLocaleDateString(), color: "#ef4444" };
       }
     });
 
@@ -1367,7 +1367,7 @@ function TutorDashboard({ name }: { name: string }) {
                           margin: "0 0 0.1rem",
                         }}
                       >
-                        {new Date(s.createdAt).toLocaleDateString()}
+                        {new Date(s.sessionDate || s.createdAt).toLocaleDateString()}
                       </p>
                       <p
                         style={{

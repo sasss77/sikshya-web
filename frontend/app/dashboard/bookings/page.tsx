@@ -337,7 +337,7 @@ export default function BookingsPage() {
         tutorName: b.tutorName,
         studentName: b.studentName,
         subject: b.subject,
-        date: b.createdAt,
+        date: b.sessionDate || b.createdAt,
         time: b.time,
         duration: b.duration,
         status: b.status,
@@ -424,7 +424,7 @@ export default function BookingsPage() {
     upcoming: nonPendingBookings.filter(b => b.status === "upcoming").length,
     completed: nonPendingBookings.filter(b => b.status === "completed").length,
     cancelled: nonPendingBookings.filter(b => b.status === "cancelled").length,
-    expired: nonPendingBookings.filter(b => b.status === "expired").length,
+    expired: allBookings.filter(b => b.status === "expired").length,
   };
 
   const totalEarned = nonPendingBookings.filter(b => b.status === "completed")
