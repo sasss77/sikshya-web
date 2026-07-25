@@ -10,8 +10,9 @@ interface ReviewModalProps {
   targetType: "tutor" | "course";
   tutorId: string;
   courseId?: string;
+  bookingId?: string;
   targetName: string;
-  onSuccess: () => void;
+  onSuccess: (rating: number) => void;
 }
 
 export default function ReviewModal({
@@ -20,6 +21,7 @@ export default function ReviewModal({
   targetType,
   tutorId,
   courseId,
+  bookingId,
   targetName,
   onSuccess,
 }: ReviewModalProps) {
@@ -51,12 +53,13 @@ export default function ReviewModal({
       rating,
       reviewText,
       courseId,
+      bookingId,
     });
 
     setIsSubmitting(false);
 
     if (res.success) {
-      onSuccess();
+      onSuccess(rating);
       onClose();
     } else {
       setError(res.error || "Failed to submit review");
