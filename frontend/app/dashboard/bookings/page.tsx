@@ -341,10 +341,12 @@ export default function BookingsPage() {
         time: b.time,
         duration: b.duration,
         status: b.status,
-        price: `Rs. ${b.price}`,
+        // Show USD if available, fall back to NPR display
+        price: b.priceUSD ? `$${b.priceUSD}` : `Rs. ${b.price}`,
         initials: getInitials(user?.role === "tutor" ? b.studentName : b.tutorName),
         avatarColor: getAvatarColor(user?.role === "tutor" ? b.studentName : b.tutorName),
         meetLink: b.meetLink,
+        rating: b.rating || undefined,
       })));
     } else {
       showToast(res.error || "Failed to load bookings", "error");
@@ -428,7 +430,13 @@ export default function BookingsPage() {
   };
 
   const totalEarned = nonPendingBookings.filter(b => b.status === "completed")
-    .reduce((sum, b) => sum + parseInt(b.price.replace(/\D/g, "") || "0"), 0);
+    .reduce((sum, b) => {
+      // Parse $ (USD) or Rs. (NPR) amounts
+      const raw = b.price.replace(/[^0-9.]/g, "");
+      return sum + parseFloat(raw || "0");
+    }, 0);
+  const isUSD = nonPendingBookings.some(b => b.price.startsWith("$"));
+  const currencySymbol = isUSD ? "$" : "Rs.";
 
   const TABS: { key: BookingStatus | "all" | "pending" | "earnings"; label: string }[] = role === "tutor"
     ? [
@@ -522,9 +530,9 @@ export default function BookingsPage() {
             {/* Earnings Summary */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
               {[
-                { label: "Total Earned", value: `Rs. ${totalEarned.toLocaleString()}`, color: "#16a34a", bg: "#dcfce7" },
-                { label: "This Month", value: "Rs. 2,000", color: "#0B4085", bg: "#e8eef7" },
-                { label: "Avg. per Session", value: `Rs. ${Math.round(totalEarned / Math.max(counts.completed, 1))}`, color: "#8b5cf6", bg: "#f3e8ff" },
+                { label: "Total Earned", value: `${currencySymbol} ${totalEarned.toLocaleString()}`, color: "#16a34a", bg: "#dcfce7" },
+                { label: "Completed Sessions", value: `${counts.completed}`, color: "#0B4085", bg: "#e8eef7" },
+                { label: "Avg. per Session", value: `${currencySymbol} ${(totalEarned / Math.max(counts.completed, 1)).toFixed(2)}`, color: "#8b5cf6", bg: "#f3e8ff" },
               ].map(s => (
                 <div key={s.label} style={{ background: "#fff", borderRadius: "14px", padding: "1.5rem", border: "1px solid #e2e8f0" }}>
                   <p style={{ fontSize: "1.75rem", fontWeight: 900, color: s.color, margin: "0 0 0.3rem" }}>{s.value}</p>
@@ -656,12 +664,13 @@ export default function BookingsPage() {
           onClose={() => setReviewTarget(null)}
           targetType="tutor"
           tutorId={reviewTarget.tutorId || ""}
+          bookingId={String(reviewTarget.id)}
           targetName={reviewTarget.tutorName}
-          onSuccess={() => {
+          onSuccess={(rating: number) => {
             showToast("Review submitted! Thank you.", "success");
             setReviewTarget(null);
             // Mark this booking locally as rated
-            setAllBookings(prev => prev.map(b => b.id === reviewTarget.id ? { ...b, rating: 5 } : b));
+            setAllBookings(prev => prev.map(b => b.id === reviewTarget.id ? { ...b, rating } : b));
           }}
         />
       )}

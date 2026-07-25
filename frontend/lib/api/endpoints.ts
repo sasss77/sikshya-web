@@ -41,4 +41,8 @@ export const ENDPOINTS = {
   CHAT_ROOMS: "/chat/rooms",
   CHAT_MESSAGES: "/chat/rooms/:roomId/messages",
   CHAT_SEARCH: "/chat/search",
+
+  // Stripe Payments
+  PAYMENTS_CHECKOUT: "/payments/create-checkout-session",
+  PAYMENTS_SESSION: "/payments/session",
 };
