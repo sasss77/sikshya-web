@@ -140,4 +140,3 @@ Contributions are welcome. If you would like to help improve the project, please
 4. Commit and push your work
 5. Open a pull request
 
-A well-maintained README and clear code comments are always appreciated, especially when adding new features or fixing issues.
